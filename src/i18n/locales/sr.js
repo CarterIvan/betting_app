@@ -199,6 +199,8 @@ export default {
     playerEmailLabel: 'Email',
     playerPasswordLabel: 'Lozinka',
     playerPasswordPlaceholder: 'min. 6 karaktera',
+    playerPaymentLabel: 'Uplata (€)',
+    playerPaymentPlaceholder: 'npr. 20',
     addPlayerButton: 'Dodaj igrača',
     addingPlayer: 'Dodavanje…',
     playerCreated: 'Igrač je uspešno kreiran.',

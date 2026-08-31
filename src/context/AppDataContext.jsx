@@ -224,8 +224,8 @@ export function AppDataProvider({ children }) {
    * service_role), not just by this button being hidden from non-admins.
    * The new player can log in immediately through the existing screen. */
   const createPlayer = useCallback(
-    async ({ name, email, password }) => {
-      await adminActionsService.createPlayer({ name, email, password })
+    async ({ name, email, password, paymentAmount }) => {
+      await adminActionsService.createPlayer({ name, email, password, paymentAmount })
       await refetchPlayers()
     },
     [refetchPlayers]

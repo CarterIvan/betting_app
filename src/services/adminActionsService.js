@@ -27,9 +27,10 @@ async function invoke(functionName, body) {
  * the admin-create-player Edge Function, which is the only thing allowed
  * to touch service_role) — they can log in with `email`/`password`
  * immediately through the existing login screen. The trigger that already
- * creates the `players` profile row on signup handles the rest. */
-async function createPlayer({ name, email, password }) {
-  return invoke('admin-create-player', { name, email, password })
+ * creates the `players` profile row on signup handles the rest; the Edge
+ * Function separately sets payment_amount to what was entered here. */
+async function createPlayer({ name, email, password, paymentAmount }) {
+  return invoke('admin-create-player', { name, email, password, paymentAmount })
 }
 
 /** Admin-only, extremely destructive. See admin-reset-league Edge

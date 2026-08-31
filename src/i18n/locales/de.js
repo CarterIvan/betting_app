@@ -199,6 +199,8 @@ export default {
     playerEmailLabel: 'E-Mail',
     playerPasswordLabel: 'Passwort',
     playerPasswordPlaceholder: 'mind. 6 Zeichen',
+    playerPaymentLabel: 'Zahlung (€)',
+    playerPaymentPlaceholder: 'z. B. 20',
     addPlayerButton: 'Spieler hinzufügen',
     addingPlayer: 'Wird hinzugefügt…',
     playerCreated: 'Spieler wurde erfolgreich erstellt.',

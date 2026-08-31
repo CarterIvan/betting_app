@@ -203,6 +203,8 @@ export default {
     playerEmailLabel: 'Email',
     playerPasswordLabel: 'Heslo',
     playerPasswordPlaceholder: 'min. 6 znakov',
+    playerPaymentLabel: 'Platba (€)',
+    playerPaymentPlaceholder: 'napr. 20',
     addPlayerButton: 'Pridať hráča',
     addingPlayer: 'Pridáva sa…',
     playerCreated: 'Hráč bol úspešne vytvorený.',

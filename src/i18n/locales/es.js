@@ -199,6 +199,8 @@ export default {
     playerEmailLabel: 'Correo electrónico',
     playerPasswordLabel: 'Contraseña',
     playerPasswordPlaceholder: 'mín. 6 caracteres',
+    playerPaymentLabel: 'Pago (€)',
+    playerPaymentPlaceholder: 'ej. 20',
     addPlayerButton: 'Añadir jugador',
     addingPlayer: 'Añadiendo…',
     playerCreated: 'Jugador creado correctamente.',

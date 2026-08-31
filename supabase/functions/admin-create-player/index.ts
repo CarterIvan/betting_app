@@ -6,10 +6,11 @@
 // for how the caller's admin status is verified first.
 //
 // The existing handle_new_user trigger (migration 0001) auto-creates the
-// matching `players` profile row from user_metadata.name — nothing else
-// to do on success.
+// matching `players` profile row from user_metadata.name; this function
+// then sets payment_amount to whatever the admin entered in the form (no
+// default — see migration 0007).
 import { corsHeaders } from '../_shared/cors.ts'
-import { requireAdmin, HttpError, jsonResponse } from '../_shared/admin.ts'
+import { requireAdmin, HttpError, jsonResponse, logSupabaseError } from '../_shared/admin.ts'
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -27,8 +28,11 @@ Deno.serve(async (req: Request) => {
     const name = typeof body.name === 'string' ? body.name.trim() : ''
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const password = typeof body.password === 'string' ? body.password : ''
+    // No default here on purpose — the admin must explicitly enter what was
+    // actually paid (0 is a valid, explicit answer; leaving it out is not).
+    const paymentAmount = typeof body.paymentAmount === 'number' ? body.paymentAmount : Number(body.paymentAmount)
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || body.paymentAmount === undefined || body.paymentAmount === null || body.paymentAmount === '' || !Number.isFinite(paymentAmount) || paymentAmount < 0) {
       throw new HttpError(400, 'admin.fillAllFields')
     }
     if (password.length < 6) {
@@ -64,6 +68,22 @@ Deno.serve(async (req: Request) => {
         throw new HttpError(409, 'errors.duplicateEmail')
       }
       throw new HttpError(400, 'errors.createFailed')
+    }
+
+    // handle_new_user() (migration 0001) already created the players row
+    // with payment_amount at its column default — this sets it to what the
+    // admin actually entered. The account itself is already created and
+    // usable at this point, so a failure here is logged but doesn't fail
+    // the whole request; the admin can still correct it from the Players
+    // list same as any other payment edit.
+    if (data.user?.id) {
+      const { error: paymentUpdateError } = await adminClient
+        .from('players')
+        .update({ payment_amount: paymentAmount })
+        .eq('id', data.user.id)
+      if (paymentUpdateError) {
+        logSupabaseError('set payment_amount on new player', paymentUpdateError)
+      }
     }
 
     return jsonResponse({ id: data.user?.id }, 200, corsHeaders)

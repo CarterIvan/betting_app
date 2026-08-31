@@ -3,7 +3,7 @@ import { UserPlus, Check } from 'lucide-react'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 
-const emptyForm = { name: '', email: '', password: '' }
+const emptyForm = { name: '', email: '', password: '', paymentAmount: '' }
 
 /** Admin > Hráči — creates a real, immediately-usable player account.
  * Security lives server-side in the admin-create-player Edge Function
@@ -24,8 +24,9 @@ export default function AdminAddPlayerForm() {
     const name = form.name.trim()
     const email = form.email.trim()
     const password = form.password
+    const paymentAmount = Number(form.paymentAmount)
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || form.paymentAmount.trim() === '' || !Number.isFinite(paymentAmount) || paymentAmount < 0) {
       setError(t('admin.fillAllFields'))
       setSuccess(false)
       return
@@ -35,7 +36,7 @@ export default function AdminAddPlayerForm() {
     setSuccess(false)
     setSubmitting(true)
     try {
-      await createPlayer({ name, email, password })
+      await createPlayer({ name, email, password, paymentAmount })
       setForm(emptyForm)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
@@ -77,6 +78,18 @@ export default function AdminAddPlayerForm() {
           value={form.password}
           onChange={update('password')}
           placeholder={t('admin.playerPasswordPlaceholder')}
+        />
+      </div>
+      <div className="field">
+        <label>{t('admin.playerPaymentLabel')}</label>
+        <input
+          type="number"
+          inputMode="decimal"
+          min="0"
+          step="0.01"
+          value={form.paymentAmount}
+          onChange={update('paymentAmount')}
+          placeholder={t('admin.playerPaymentPlaceholder')}
         />
       </div>
       <button className="btn btn-gold btn-block" type="submit" disabled={submitting}>
