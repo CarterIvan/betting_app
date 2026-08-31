@@ -1,0 +1,297 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import authService from '../services/authService'
+import playersService from '../services/playersService'
+import teamsService from '../services/teamsService'
+import matchesService from '../services/matchesService'
+import predictionsService from '../services/predictionsService'
+import chatService from '../services/chatService'
+import profileService from '../services/profileService'
+import settingsService from '../services/settingsService'
+import dataService from '../services/dataService'
+import { getTeamById as findTeam } from '../data/teams'
+import { isSupabaseConfigured } from '../lib/supabase'
+import { getMatchStatus, MATCH_STATUS } from '../utils/matchState'
+
+const AppDataContext = createContext(null)
+
+export function AppDataProvider({ children }) {
+  const [authResolved, setAuthResolved] = useState(false)
+  const [dataLoading, setDataLoading] = useState(false)
+  // Stored as an i18n KEY (see src/i18n/locales/*.js), not translated text —
+  // keeps this provider language-agnostic; App.jsx resolves it via
+  // t(loadError) at the point it's actually displayed.
+  const [loadError, setLoadError] = useState(isSupabaseConfigured ? '' : 'errors.configMissing')
+  const [currentUser, setCurrentUser] = useState(null)
+  const [players, setPlayers] = useState([])
+  const [teams, setTeams] = useState([])
+  const [matches, setMatches] = useState([])
+  const [predictions, setPredictions] = useState([])
+  const [chatMessages, setChatMessages] = useState([])
+  const [readState, setReadState] = useState({})
+  const [settings, setSettings] = useState(null)
+
+  // A logged-in-but-unpaid account: real, valid credentials, but no access
+  // to anything else yet — Postgres enforces this independently via RLS
+  // (see migration 0004's has_access()), this just mirrors it for the UI.
+  const accessBlocked = Boolean(currentUser) && !currentUser.isAdmin && !currentUser.isPaid
+
+  // Auth is the single source of truth for `currentUser` — login()/logout()
+  // just call Supabase, this listener is what actually updates state, so
+  // there is exactly one place that can ever set a logged-in user.
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setAuthResolved(true)
+      return
+    }
+    const unsubscribe = authService.onAuthStateChange((profile) => {
+      setCurrentUser(profile)
+      setAuthResolved(true)
+    })
+    return unsubscribe
+  }, [])
+
+  // Once a user is known AND has access, load the rest of the app's data
+  // and keep chat updating live. Tears everything down again on
+  // logout/access-revoked. An unpaid account never reaches this — every
+  // one of these tables is RLS-gated behind has_access() anyway, so
+  // skipping the fetch just avoids a batch of requests that would only
+  // come back empty/rejected.
+  useEffect(() => {
+    if (!currentUser || accessBlocked) {
+      setPlayers([])
+      setTeams([])
+      setMatches([])
+      setPredictions([])
+      setChatMessages([])
+      setSettings(null)
+      return
+    }
+
+    let cancelled = false
+    setDataLoading(true)
+    setLoadError('')
+
+    Promise.all([
+      playersService.getAll(),
+      teamsService.getAll(),
+      matchesService.getAll(),
+      predictionsService.getAll(),
+      chatService.getAll(),
+      dataService.getReadState(),
+      settingsService.get(),
+    ])
+      .then(([pls, tms, mts, preds, chat, reads, settingsData]) => {
+        if (cancelled) return
+        setPlayers(pls)
+        setTeams(tms)
+        setMatches(mts)
+        setPredictions(preds)
+        setChatMessages(chat)
+        setReadState(reads)
+        setSettings(settingsData)
+      })
+      .catch((err) => {
+        if (!cancelled) setLoadError('errors.dataLoadFailed')
+      })
+      .finally(() => {
+        if (!cancelled) setDataLoading(false)
+      })
+
+    const unsubscribeChat = chatService.subscribe((message) => {
+      setChatMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]))
+    })
+
+    return () => {
+      cancelled = true
+      unsubscribeChat()
+    }
+  }, [currentUser, accessBlocked])
+
+  const refetchPlayers = useCallback(() => playersService.getAll().then(setPlayers), [])
+  const refetchMatches = useCallback(() => matchesService.getAll().then(setMatches), [])
+  const refetchPredictions = useCallback(() => predictionsService.getAll().then(setPredictions), [])
+  const refetchSettings = useCallback(() => settingsService.get().then(setSettings), [])
+
+  const login = useCallback(async (email, password) => {
+    // Deliberately does not setCurrentUser itself — the onAuthStateChange
+    // listener above is the single place that does, avoiding two competing
+    // writers of the same state.
+    await authService.login(email, password)
+  }, [])
+
+  const logout = useCallback(async () => {
+    await authService.logout()
+  }, [])
+
+  /** Storage RLS enforces "own folder only" server-side (see migration
+   * 0003) — this can genuinely reject for a tampered request, not just a
+   * disabled button. Updates `currentUser` immediately for a snappy header,
+   * then refreshes the full `players` list so the ranking/podium/chat pick
+   * up the new photo too. */
+  const uploadAvatar = useCallback(
+    async (file) => {
+      if (!currentUser) return null
+      const avatarUrl = await profileService.uploadAvatar(currentUser.id, file)
+      setCurrentUser((prev) => (prev ? { ...prev, avatarUrl } : prev))
+      await refetchPlayers()
+      return avatarUrl
+    },
+    [currentUser, refetchPlayers]
+  )
+
+  /** RLS + the two-save-limit trigger enforce the real rules (own
+   * prediction only, before kickoff, at most two saves) — this can
+   * genuinely reject, so callers must handle the rejection. Returns the
+   * saved prediction (with its post-save `saveCount`) so the caller can
+   * react immediately, without waiting on the follow-up refetch. */
+  const savePrediction = useCallback(
+    async (matchId, predictedHome, predictedAway) => {
+      if (!currentUser) return null
+      const saved = await predictionsService.save(currentUser.id, matchId, predictedHome, predictedAway)
+      await refetchPredictions()
+      return saved
+    },
+    [currentUser, refetchPredictions]
+  )
+
+  const addMatch = useCallback(
+    async (matchData) => {
+      await matchesService.create(matchData)
+      await refetchMatches()
+    },
+    [refetchMatches]
+  )
+
+  const updateMatch = useCallback(
+    async (matchId, updates) => {
+      await matchesService.update(matchId, updates)
+      await refetchMatches()
+    },
+    [refetchMatches]
+  )
+
+  const deleteMatch = useCallback(
+    async (matchId) => {
+      await matchesService.remove(matchId)
+      await Promise.all([refetchMatches(), refetchPredictions()])
+    },
+    [refetchMatches, refetchPredictions]
+  )
+
+  /** The entire scoring pipeline runs server-side inside finish_match() —
+   * see supabase/migrations/0001_init.sql. This just calls it and reloads
+   * the three things it touched. */
+  const finishMatch = useCallback(
+    async (matchId, finalHomeScore, finalAwayScore) => {
+      await matchesService.finish(matchId, finalHomeScore, finalAwayScore)
+      await Promise.all([refetchMatches(), refetchPredictions(), refetchPlayers()])
+    },
+    [refetchMatches, refetchPredictions, refetchPlayers]
+  )
+
+  /** Admin-only maintenance utility (recalculate_all_points RPC). */
+  const recalculateAll = useCallback(async () => {
+    await matchesService.recalculateAllPoints()
+    await Promise.all([refetchPredictions(), refetchPlayers()])
+  }, [refetchPredictions, refetchPlayers])
+
+  /** Admin-only (RLS + trigger — see migration 0004). Flips a player's paid
+   * status; access is derived from this everywhere else in the app, so
+   * nothing else needs updating by hand. */
+  const setPlayerPaymentStatus = useCallback(
+    async (playerId, isPaid) => {
+      await playersService.setPaymentStatus(playerId, isPaid)
+      await refetchPlayers()
+    },
+    [refetchPlayers]
+  )
+
+  /** Admin-only (RLS — see migration 0004). One settings row, so every
+   * player's Banka page reflects the new prize amounts immediately on
+   * their next fetch — nothing duplicated to keep in sync. */
+  const updatePrizeSettings = useCallback(
+    async (values) => {
+      await settingsService.update(values)
+      await refetchSettings()
+    },
+    [refetchSettings]
+  )
+
+  const sendChatMessage = useCallback(
+    async (text) => {
+      if (!currentUser || !text.trim()) return
+      // No optimistic local append: the realtime subscription above adds
+      // the message for every viewer, including the sender, once Postgres
+      // confirms the insert — one code path instead of two.
+      await chatService.send(currentUser.id, text)
+    },
+    [currentUser]
+  )
+
+  const markChatRead = useCallback(() => {
+    if (!currentUser || chatMessages.length === 0) return
+    setReadState((prev) => {
+      const lastId = chatMessages[chatMessages.length - 1].id
+      if (prev[currentUser.id] === lastId) return prev
+      const next = { ...prev, [currentUser.id]: lastId }
+      dataService.saveReadState(next)
+      return next
+    })
+  }, [currentUser, chatMessages])
+
+  const getTeamById = useCallback((id) => findTeam(teams, id), [teams])
+
+  // Reuses the same `matches` state (and the same status derivation) the
+  // Live page itself renders from — no separate fetch, no separate
+  // "is it live" logic to keep in sync.
+  const liveMatchCount = useMemo(
+    () => matches.filter((m) => getMatchStatus(m) === MATCH_STATUS.LIVE).length,
+    [matches]
+  )
+
+  const unreadChatCount = useMemo(() => {
+    if (!currentUser) return 0
+    const lastReadId = readState[currentUser.id]
+    if (!lastReadId) return chatMessages.filter((m) => m.playerId !== currentUser.id).length
+    const idx = chatMessages.findIndex((m) => m.id === lastReadId)
+    if (idx === -1) return chatMessages.filter((m) => m.playerId !== currentUser.id).length
+    return chatMessages.slice(idx + 1).filter((m) => m.playerId !== currentUser.id).length
+  }, [chatMessages, readState, currentUser])
+
+  const value = {
+    loading: !authResolved || (Boolean(currentUser) && dataLoading && players.length === 0),
+    loadError,
+    currentUser,
+    accessBlocked,
+    players,
+    teams,
+    matches,
+    predictions,
+    chatMessages,
+    settings,
+    unreadChatCount,
+    liveMatchCount,
+    getTeamById,
+    login,
+    logout,
+    uploadAvatar,
+    savePrediction,
+    addMatch,
+    updateMatch,
+    deleteMatch,
+    finishMatch,
+    recalculateAll,
+    setPlayerPaymentStatus,
+    updatePrizeSettings,
+    sendChatMessage,
+    markChatRead,
+  }
+
+  return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>
+}
+
+export function useAppData() {
+  const ctx = useContext(AppDataContext)
+  if (!ctx) throw new Error('useAppData must be used within AppDataProvider')
+  return ctx
+}
