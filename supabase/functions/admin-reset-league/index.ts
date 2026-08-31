@@ -1,17 +1,24 @@
 // Admin-only: permanently resets the league to a fresh, empty state.
 //
-// Two phases:
-//   1. reset_league_data() (SQL RPC, migration 0005) wipes chat messages,
-//      predictions, matches, resets cached points and the prize
-//      distribution — everything a plain Postgres function can safely do.
-//      Called via the CALLER's own client (not service_role), so the
-//      RPC's own internal `auth.uid()` admin re-check resolves correctly —
-//      belt and suspenders with the check this function already did.
-//   2. Every non-admin player's actual Supabase Auth account is deleted.
-//      This requires the Admin API (service_role) — a Postgres function
-//      cannot safely do this itself. Deleting the auth user cascades
-//      (players -> predictions/chat) to remove their profile too, but by
-//      this point those are already empty from step 1.
+// Two phases, ordered to minimize damage if something fails partway:
+//   1. Every non-admin player's actual Supabase Auth account is deleted
+//      first. This requires the Admin API (service_role) — a Postgres
+//      function cannot safely do this itself.
+//   2. Only once every account removal has succeeded (or there was
+//      nothing to remove) does reset_league_data() (SQL RPC, migration
+//      0005/0006) run, wiping chat messages, predictions, matches, and
+//      resetting cached points and the prize distribution. That RPC's own
+//      body is a single implicit transaction — it is all-or-nothing on its
+//      own — and it's called via the CALLER's own client (not
+//      service_role), so its internal `auth.uid()` admin re-check resolves
+//      correctly, belt and suspenders with the check this function already
+//      did.
+//
+// Running account removal BEFORE the league-wide wipe (rather than after,
+// as this originally did) means: if account removal fails partway, the
+// competition's matches/predictions/chat/points are untouched — the
+// smaller, more recoverable side effect is the one left behind on failure,
+// never the larger one.
 //
 // See _shared/admin.ts for how the caller's admin status is verified
 // before any of this runs.
@@ -30,12 +37,6 @@ Deno.serve(async (req: Request) => {
 
     const { callerClient, adminClient } = await requireAdmin(req)
 
-    const { error: rpcError } = await callerClient.rpc('reset_league_data')
-    if (rpcError) {
-      logSupabaseError('reset_league_data RPC', rpcError)
-      throw new HttpError(500, classifyRpcError(rpcError))
-    }
-
     const { data: playersToRemove, error: listError } = await adminClient
       .from('players')
       .select('id')
@@ -50,23 +51,27 @@ Deno.serve(async (req: Request) => {
     for (const player of playersToRemove ?? []) {
       const { error: deleteError } = await adminClient.auth.admin.deleteUser(player.id)
       if (deleteError) {
-        // Best-effort: keep removing everyone else. Whatever's left behind
-        // already has no predictions/chat/points (step 1 wiped those), so
-        // a stray leftover account is a cleanup issue, not a data leak.
         failures.push(player.id)
         logSupabaseError(`delete auth user ${player.id}`, deleteError)
       }
     }
 
-    const totalToRemove = playersToRemove?.length ?? 0
-    if (totalToRemove > 0 && failures.length === totalToRemove) {
-      // Every single deletion failed — something is systemically wrong
-      // (e.g. a bad service_role key), worth surfacing as an error rather
-      // than a silent partial success.
+    if (failures.length > 0) {
+      // Do NOT proceed to the league-wide wipe — some accounts still
+      // exist, so the reset is incomplete either way, and running the RPC
+      // now would additionally destroy every match/prediction/chat message
+      // for no benefit. Nothing beyond the already-deleted accounts (if
+      // any partial progress happened) has changed at this point.
       throw new HttpError(500, 'errors.resetFailed')
     }
 
-    return jsonResponse({ success: true, removedPlayers: totalToRemove - failures.length }, 200, corsHeaders)
+    const { error: rpcError } = await callerClient.rpc('reset_league_data')
+    if (rpcError) {
+      logSupabaseError('reset_league_data RPC', rpcError)
+      throw new HttpError(500, classifyRpcError(rpcError))
+    }
+
+    return jsonResponse({ success: true, removedPlayers: playersToRemove?.length ?? 0 }, 200, corsHeaders)
   } catch (err) {
     if (!(err instanceof HttpError)) {
       logSupabaseError('admin-reset-league unexpected error', err)
