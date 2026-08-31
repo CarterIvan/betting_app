@@ -9,7 +9,9 @@ import { getKickoffTimestamp, getMatchStatus, MATCH_STATUS } from '../utils/matc
 import AdminMatchForm from '../components/AdminMatchForm.jsx'
 import AdminMatchList from '../components/AdminMatchList.jsx'
 import AdminPlayersList from '../components/AdminPlayersList.jsx'
+import AdminAddPlayerForm from '../components/AdminAddPlayerForm.jsx'
 import AdminPrizeForm from '../components/AdminPrizeForm.jsx'
+import AdminDangerZone from '../components/AdminDangerZone.jsx'
 
 const MENU = [
   { key: 'add', titleKey: 'admin.menuAddMatch', subKey: 'admin.menuAddMatchSub', icon: Plus },
@@ -128,19 +130,27 @@ export default function AdminPage({ onNavigate }) {
         <AdminMatchList matches={sorted} onUpdate={updateMatch} onDelete={deleteMatch} onFinish={handleFinish} />
       )}
 
-      {view === 'players' && <AdminPlayersList />}
+      {view === 'players' && (
+        <>
+          <AdminAddPlayerForm />
+          <AdminPlayersList />
+        </>
+      )}
 
       {view === 'prizes' && <AdminPrizeForm />}
 
       {view === 'settings' && (
-        <div className="card">
-          <p style={{ fontSize: 12.5, color: 'var(--text-soft)', margin: '0 0 12px', fontWeight: 600 }}>
-            {t('admin.recalcDescription')}
-          </p>
-          <button className="btn btn-outline btn-sm" onClick={handleRecalculate}>
-            <Calculator size={14} /> {t('admin.recalcButton')}
-          </button>
-        </div>
+        <>
+          <div className="card">
+            <p style={{ fontSize: 12.5, color: 'var(--text-soft)', margin: '0 0 12px', fontWeight: 600 }}>
+              {t('admin.recalcDescription')}
+            </p>
+            <button className="btn btn-outline btn-sm" onClick={handleRecalculate}>
+              <Calculator size={14} /> {t('admin.recalcButton')}
+            </button>
+          </div>
+          <AdminDangerZone />
+        </>
       )}
 
       {toast && <div className="toast">{toast}</div>}

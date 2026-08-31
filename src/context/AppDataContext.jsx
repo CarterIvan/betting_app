@@ -7,6 +7,7 @@ import predictionsService from '../services/predictionsService'
 import chatService from '../services/chatService'
 import profileService from '../services/profileService'
 import settingsService from '../services/settingsService'
+import adminActionsService from '../services/adminActionsService'
 import dataService from '../services/dataService'
 import { getTeamById as findTeam } from '../data/teams'
 import { isSupabaseConfigured } from '../lib/supabase'
@@ -111,6 +112,7 @@ export function AppDataProvider({ children }) {
   const refetchMatches = useCallback(() => matchesService.getAll().then(setMatches), [])
   const refetchPredictions = useCallback(() => predictionsService.getAll().then(setPredictions), [])
   const refetchSettings = useCallback(() => settingsService.get().then(setSettings), [])
+  const refetchChatMessages = useCallback(() => chatService.getAll().then(setChatMessages), [])
 
   const login = useCallback(async (email, password) => {
     // Deliberately does not setCurrentUser itself — the onAuthStateChange
@@ -217,6 +219,33 @@ export function AppDataProvider({ children }) {
     [refetchSettings]
   )
 
+  /** Admin-only — enforced server-side by the admin-create-player Edge
+   * Function (verifies the caller is an admin before ever touching
+   * service_role), not just by this button being hidden from non-admins.
+   * The new player can log in immediately through the existing screen. */
+  const createPlayer = useCallback(
+    async ({ name, email, password }) => {
+      await adminActionsService.createPlayer({ name, email, password })
+      await refetchPlayers()
+    },
+    [refetchPlayers]
+  )
+
+  /** Admin-only, extremely destructive — enforced server-side by the
+   * admin-reset-league Edge Function (see its own admin re-check) and by
+   * reset_league_data() re-checking admin status again independently.
+   * Refreshes every piece of state the reset actually touches. */
+  const resetLeague = useCallback(async () => {
+    await adminActionsService.resetLeague()
+    await Promise.all([
+      refetchPlayers(),
+      refetchMatches(),
+      refetchPredictions(),
+      refetchChatMessages(),
+      refetchSettings(),
+    ])
+  }, [refetchPlayers, refetchMatches, refetchPredictions, refetchChatMessages, refetchSettings])
+
   const sendChatMessage = useCallback(
     async (text) => {
       if (!currentUser || !text.trim()) return
@@ -283,6 +312,8 @@ export function AppDataProvider({ children }) {
     recalculateAll,
     setPlayerPaymentStatus,
     updatePrizeSettings,
+    createPlayer,
+    resetLeague,
     sendChatMessage,
     markChatRead,
   }
