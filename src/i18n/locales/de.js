@@ -219,6 +219,7 @@ export default {
     duplicateEmail: 'Ein Spieler mit dieser E-Mail existiert bereits.',
     createFailed: 'Der Spieler konnte nicht erstellt werden.',
     resetFailed: 'Die Liga konnte nicht zurückgesetzt werden.',
+    resetFunctionMissing: 'Die Reset-Funktion wurde in der Datenbank nicht gefunden. Bitte die neueste Datenbankmigration anwenden.',
     unauthorized: 'Du bist nicht berechtigt, diese Aktion auszuführen.',
     unexpected: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
   },

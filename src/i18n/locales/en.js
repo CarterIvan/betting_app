@@ -222,6 +222,7 @@ export default {
     duplicateEmail: 'A player with this email already exists.',
     createFailed: 'Could not create the player.',
     resetFailed: 'Could not reset the league.',
+    resetFunctionMissing: 'Reset function not found in the database. Please apply the latest database migration.',
     unauthorized: 'You are not authorized to perform this action.',
     unexpected: 'Something went wrong. Please try again.',
   },

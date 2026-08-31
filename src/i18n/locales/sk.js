@@ -223,6 +223,7 @@ export default {
     duplicateEmail: 'Hráč s týmto emailom už existuje.',
     createFailed: 'Hráča sa nepodarilo vytvoriť.',
     resetFailed: 'Ligu sa nepodarilo resetovať.',
+    resetFunctionMissing: 'V databáze chýba resetovacia funkcia. Spusti najnovšiu databázovú migráciu.',
     unauthorized: 'Nemáš oprávnenie na túto akciu.',
     unexpected: 'Nastala neočakávaná chyba. Skús to znova.',
   },

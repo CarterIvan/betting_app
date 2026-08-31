@@ -16,7 +16,7 @@
 // See _shared/admin.ts for how the caller's admin status is verified
 // before any of this runs.
 import { corsHeaders } from '../_shared/cors.ts'
-import { requireAdmin, HttpError, jsonResponse } from '../_shared/admin.ts'
+import { requireAdmin, HttpError, jsonResponse, logSupabaseError, classifyRpcError } from '../_shared/admin.ts'
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -32,7 +32,8 @@ Deno.serve(async (req: Request) => {
 
     const { error: rpcError } = await callerClient.rpc('reset_league_data')
     if (rpcError) {
-      throw new HttpError(500, 'errors.resetFailed')
+      logSupabaseError('reset_league_data RPC', rpcError)
+      throw new HttpError(500, classifyRpcError(rpcError))
     }
 
     const { data: playersToRemove, error: listError } = await adminClient
@@ -41,6 +42,7 @@ Deno.serve(async (req: Request) => {
       .eq('is_admin', false)
 
     if (listError) {
+      logSupabaseError('list non-admin players', listError)
       throw new HttpError(500, 'errors.resetFailed')
     }
 
@@ -52,7 +54,7 @@ Deno.serve(async (req: Request) => {
         // already has no predictions/chat/points (step 1 wiped those), so
         // a stray leftover account is a cleanup issue, not a data leak.
         failures.push(player.id)
-        console.error(`Failed to delete auth user ${player.id}:`, deleteError.message)
+        logSupabaseError(`delete auth user ${player.id}`, deleteError)
       }
     }
 
@@ -66,6 +68,9 @@ Deno.serve(async (req: Request) => {
 
     return jsonResponse({ success: true, removedPlayers: totalToRemove - failures.length }, 200, corsHeaders)
   } catch (err) {
+    if (!(err instanceof HttpError)) {
+      logSupabaseError('admin-reset-league unexpected error', err)
+    }
     const status = err instanceof HttpError ? err.status : 500
     const message = err instanceof HttpError ? err.message : 'errors.unexpected'
     return jsonResponse({ error: message }, status, corsHeaders)

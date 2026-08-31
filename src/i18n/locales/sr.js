@@ -219,6 +219,7 @@ export default {
     duplicateEmail: 'Igrač sa ovim emailom već postoji.',
     createFailed: 'Igrača nije moguće kreirati.',
     resetFailed: 'Ligu nije moguće resetovati.',
+    resetFunctionMissing: 'Funkcija za reset nije pronađena u bazi podataka. Primenite najnoviju migraciju baze.',
     unauthorized: 'Nemate ovlašćenje za ovu akciju.',
     unexpected: 'Došlo je do neočekivane greške. Pokušajte ponovo.',
   },

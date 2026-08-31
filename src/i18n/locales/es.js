@@ -219,6 +219,7 @@ export default {
     duplicateEmail: 'Ya existe un jugador con este correo electrónico.',
     createFailed: 'No se pudo crear el jugador.',
     resetFailed: 'No se pudo reiniciar la liga.',
+    resetFunctionMissing: 'No se encontró la función de reinicio en la base de datos. Aplica la última migración de la base de datos.',
     unauthorized: 'No tienes autorización para realizar esta acción.',
     unexpected: 'Algo salió mal. Inténtalo de nuevo.',
   },

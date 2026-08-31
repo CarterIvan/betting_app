@@ -20,6 +20,25 @@ function requiredEnv(name: string): string {
   return value
 }
 
+// Reads the platform-managed service-role-equivalent key from the new key
+// system (SUPABASE_SECRET_KEYS, a JSON object keyed by key name — the
+// project's key is under "default") instead of the legacy JWT-format
+// SUPABASE_SERVICE_ROLE_KEY. Both are auto-injected by Supabase; this just
+// points the function at the non-legacy one so nothing in this project
+// depends on the legacy key anymore.
+function requiredServiceRoleKey(): string {
+  const raw = requiredEnv('SUPABASE_SECRET_KEYS')
+  let parsed: Record<string, string>
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    throw new Error('SUPABASE_SECRET_KEYS is not valid JSON')
+  }
+  const key = parsed.default
+  if (!key) throw new Error('SUPABASE_SECRET_KEYS has no "default" entry')
+  return key
+}
+
 export async function requireAdmin(req: Request) {
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
@@ -28,7 +47,7 @@ export async function requireAdmin(req: Request) {
 
   const supabaseUrl = requiredEnv('SUPABASE_URL')
   const anonKey = requiredEnv('SUPABASE_ANON_KEY')
-  const serviceRoleKey = requiredEnv('SUPABASE_SERVICE_ROLE_KEY')
+  const serviceRoleKey = requiredServiceRoleKey()
 
   // Authenticated AS THE CALLER (their JWT, not service_role) — subject to
   // RLS exactly like a normal request from the app would be.
@@ -66,4 +85,39 @@ export function jsonResponse(body: unknown, status: number, corsHeaders: Record<
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
+}
+
+/** Logs the FULL Postgres/PostgREST error (message/code/details/hint) with
+ * a labeled context, so it actually shows up in `supabase functions logs`.
+ * Nothing upstream of this was doing that before — a query failing just
+ * turned into a generic message with zero trace of why. */
+export function logSupabaseError(context: string, error: unknown) {
+  const e = (error ?? {}) as { message?: string; code?: string; details?: string; hint?: string }
+  console.error(`[${context}]`, {
+    message: e.message ?? String(error),
+    code: e.code,
+    details: e.details,
+    hint: e.hint,
+  })
+}
+
+/** Turns a PostgREST/Postgres error from a failed RPC call into a specific,
+ * actionable i18n key instead of one generic catch-all — so "the function
+ * doesn't exist yet" (a migration that hasn't been applied) is reported as
+ * exactly that, not confused with an actual runtime failure inside the
+ * function. PGRST202 is PostgREST's code for "could not find the function
+ * in the schema cache"; 42501 is Postgres' own insufficient_privilege,
+ * which reset_league_data() raises itself if its own admin re-check ever
+ * fails despite this Edge Function's own check having just passed. */
+export function classifyRpcError(error: unknown): string {
+  const e = (error ?? {}) as { message?: string; code?: string }
+  const message = (e.message ?? '').toLowerCase()
+
+  if (e.code === 'PGRST202' || message.includes('could not find the function')) {
+    return 'errors.resetFunctionMissing'
+  }
+  if (e.code === '42501') {
+    return 'errors.unauthorized'
+  }
+  return 'errors.resetFailed'
 }
