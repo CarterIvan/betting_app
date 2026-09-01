@@ -40,13 +40,8 @@ export default function LoginPage() {
       </div>
 
       <img src="/tipovacka-logo.png" alt="Tipovačka Liga Majstrov" className="login-logo" />
-      <div className="login-title">
-        TIPOVAČKA
-        <br />
-        LIGA MAJSTROV
-      </div>
-      <div className="login-year">2026</div>
-      <div className="login-subtitle">SKP2</div>
+     
+ 
 
       <form className="login-card" onSubmit={handleSubmit}>
         <div className="login-card-title">{t('login.cardTitle')}</div>
