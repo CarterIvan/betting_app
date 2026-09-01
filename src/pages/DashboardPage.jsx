@@ -7,7 +7,7 @@ import UpcomingMatches from '../components/UpcomingMatches.jsx'
 import ProfileMenu from '../components/ProfileMenu.jsx'
 
 export default function DashboardPage() {
-  const { currentUser, players, predictions } = useAppData()
+  const { currentUser, players, predictions, leagueLogoUrl } = useAppData()
   const { t } = useLanguage()
   const leaderboard = computeLeaderboard(players, predictions)
   const myPoints = leaderboard.find((e) => e.player.id === currentUser.id)?.totalPoints ?? 0
@@ -26,7 +26,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="dashboard-brand">
-        <img src="/tipovacka-logo.png" alt="Tipovačka Liga Majstrov" className="dashboard-logo" />
+        <img src={leagueLogoUrl || '/tipovacka-logo.png'} alt="Tipovačka Liga Majstrov" className="dashboard-logo" />
 
         <div className="dashboard-brand-sub">SKP2</div>
       </div>

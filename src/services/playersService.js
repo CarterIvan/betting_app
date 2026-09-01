@@ -32,6 +32,34 @@ async function setPaymentStatus(playerId, isPaid) {
   if (error) throw error
 }
 
-const playersService = { getAll, setPaymentStatus }
+/** Admin-only (RLS + trigger, same grant as is_paid/paid_at — see
+ * migration 0004). Manually corrects what a player actually paid — the
+ * one existing money field on a player, also shown on the Banka page. */
+async function setPaymentAmount(playerId, paymentAmount) {
+  const { error } = await supabase
+    .from('players')
+    .update({ payment_amount: paymentAmount })
+    .eq('id', playerId)
+  if (error) throw error
+}
+
+/** Admin-only (RPC re-checks independently — see migration 0008).
+ * auth.users.email isn't exposed by any table, so this is the only way to
+ * show it in the player management panel. */
+async function getEmail(playerId) {
+  const { data, error } = await supabase.rpc('admin_get_player_email', { p_player_id: playerId })
+  if (error) throw error
+  return data
+}
+
+/** Admin-only, permanent (RPC re-checks independently — see migration
+ * 0008). Removes ONLY this player's profile/predictions/chat from this
+ * competition — never their Supabase Auth account. */
+async function deletePlayer(playerId) {
+  const { error } = await supabase.rpc('admin_delete_player', { p_player_id: playerId })
+  if (error) throw error
+}
+
+const playersService = { getAll, setPaymentStatus, setPaymentAmount, getEmail, deletePlayer }
 
 export default playersService

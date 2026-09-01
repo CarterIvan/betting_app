@@ -1304,6 +1304,9 @@ img { max-width: 100%; display: block; }
 .payment-badge.clickable:active { transform: scale(0.94); }
 .payment-badge:disabled { opacity: 0.6; cursor: not-allowed; }
 
+.admin-player-row-clickable { width: 100%; text-align: left; cursor: pointer; }
+.admin-player-row-clickable:active { transform: scale(0.99); }
+
 /* ==========================================================================
    MISC / RESPONSIVE
    ========================================================================== */

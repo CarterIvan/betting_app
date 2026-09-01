@@ -3,12 +3,12 @@ import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 
 export default function AccessBlockedPage() {
-  const { currentUser, logout } = useAppData()
+  const { currentUser, logout, leagueLogoUrl } = useAppData()
   const { t } = useLanguage()
 
   return (
     <div className="access-blocked-page">
-      <img src="/tipovacka-logo.png" alt="Tipovačka Liga Majstrov" className="access-blocked-logo" />
+      <img src={leagueLogoUrl || '/tipovacka-logo.png'} alt="Tipovačka Liga Majstrov" className="access-blocked-logo" />
 
       <div className="access-blocked-icon">
         <Clock size={26} />

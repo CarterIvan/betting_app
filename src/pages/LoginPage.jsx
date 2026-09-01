@@ -5,7 +5,7 @@ import { useLanguage } from '../i18n/LanguageContext.jsx'
 import LanguageSelector from '../components/LanguageSelector.jsx'
 
 export default function LoginPage() {
-  const { login } = useAppData()
+  const { login, leagueLogoUrl } = useAppData()
   const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -39,7 +39,7 @@ export default function LoginPage() {
         <LanguageSelector />
       </div>
 
-      <img src="/tipovacka-logo.png" alt="Tipovačka Liga Majstrov" className="login-logo" />
+      <img src={leagueLogoUrl || '/tipovacka-logo.png'} alt="Tipovačka Liga Majstrov" className="login-logo" />
      
  
 

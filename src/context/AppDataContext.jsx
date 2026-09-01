@@ -7,6 +7,7 @@ import predictionsService from '../services/predictionsService'
 import chatService from '../services/chatService'
 import profileService from '../services/profileService'
 import settingsService from '../services/settingsService'
+import logoService from '../services/logoService'
 import adminActionsService from '../services/adminActionsService'
 import dataService from '../services/dataService'
 import { getTeamById as findTeam } from '../data/teams'
@@ -30,6 +31,7 @@ export function AppDataProvider({ children }) {
   const [chatMessages, setChatMessages] = useState([])
   const [readState, setReadState] = useState({})
   const [settings, setSettings] = useState(null)
+  const [leagueLogoUrl, setLeagueLogoUrl] = useState(null)
 
   // A logged-in-but-unpaid account: real, valid credentials, but no access
   // to anything else yet — Postgres enforces this independently via RLS
@@ -49,6 +51,17 @@ export function AppDataProvider({ children }) {
       setAuthResolved(true)
     })
     return unsubscribe
+  }, [])
+
+  // Public (see migration 0008's get_league_logo_url) — fetched once,
+  // independent of auth state, so the custom logo shows on the login
+  // screen too, before anyone is authenticated.
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+    settingsService
+      .getLogoUrl()
+      .then(setLeagueLogoUrl)
+      .catch(() => setLeagueLogoUrl(null))
   }, [])
 
   // Once a user is known AND has access, load the rest of the app's data
@@ -112,6 +125,10 @@ export function AppDataProvider({ children }) {
   const refetchMatches = useCallback(() => matchesService.getAll().then(setMatches), [])
   const refetchPredictions = useCallback(() => predictionsService.getAll().then(setPredictions), [])
   const refetchSettings = useCallback(() => settingsService.get().then(setSettings), [])
+  const refetchLeagueLogo = useCallback(
+    () => settingsService.getLogoUrl().then(setLeagueLogoUrl),
+    []
+  )
   const refetchChatMessages = useCallback(() => chatService.getAll().then(setChatMessages), [])
 
   const login = useCallback(async (email, password) => {
@@ -219,6 +236,52 @@ export function AppDataProvider({ children }) {
     [refetchSettings]
   )
 
+  /** Admin-only (Storage RLS + settings RLS — see migration 0008). Uploads
+   * the file, then saves the resulting URL onto the one settings row — the
+   * next fetch anywhere in the app (login screen included) reflects it. */
+  const updateLeagueLogo = useCallback(
+    async (file) => {
+      const url = await logoService.upload(file)
+      await settingsService.setLogoUrl(url)
+      await refetchLeagueLogo()
+    },
+    [refetchLeagueLogo]
+  )
+
+  /** Admin-only. Deletes the Storage object and clears settings.logo_url —
+   * every screen falls back to the default /tipovacka-logo.png. */
+  const removeLeagueLogo = useCallback(async () => {
+    await logoService.remove()
+    await settingsService.setLogoUrl(null)
+    await refetchLeagueLogo()
+  }, [refetchLeagueLogo])
+
+  /** Admin-only (RLS + trigger, same column grant as is_paid/paid_at — see
+   * migration 0004). Manually corrects a player's payment_amount — the
+   * one existing money field on a player, shown on the Banka page and in
+   * the player management panel as "balance". */
+  const editPlayerBalance = useCallback(
+    async (playerId, paymentAmount) => {
+      await playersService.setPaymentAmount(playerId, paymentAmount)
+      await refetchPlayers()
+    },
+    [refetchPlayers]
+  )
+
+  /** Admin-only (RPC re-checks independently — see migration 0008). */
+  const getPlayerEmail = useCallback((playerId) => playersService.getEmail(playerId), [])
+
+  /** Admin-only, permanent (RPC re-checks independently — see migration
+   * 0008). Removes only this player's profile/predictions/chat from this
+   * competition — their Supabase Auth account is never touched. */
+  const deletePlayer = useCallback(
+    async (playerId) => {
+      await playersService.deletePlayer(playerId)
+      await Promise.all([refetchPlayers(), refetchPredictions(), refetchChatMessages()])
+    },
+    [refetchPlayers, refetchPredictions, refetchChatMessages]
+  )
+
   /** Admin-only — enforced server-side by the admin-create-player Edge
    * Function (verifies the caller is an admin before ever touching
    * service_role), not just by this button being hidden from non-admins.
@@ -298,6 +361,7 @@ export function AppDataProvider({ children }) {
     predictions,
     chatMessages,
     settings,
+    leagueLogoUrl,
     unreadChatCount,
     liveMatchCount,
     getTeamById,
@@ -312,6 +376,11 @@ export function AppDataProvider({ children }) {
     recalculateAll,
     setPlayerPaymentStatus,
     updatePrizeSettings,
+    updateLeagueLogo,
+    removeLeagueLogo,
+    editPlayerBalance,
+    getPlayerEmail,
+    deletePlayer,
     createPlayer,
     resetLeague,
     sendChatMessage,
