@@ -479,7 +479,7 @@ img { max-width: 100%; display: block; }
 .profile-lang-flag-btn.active { border-color: var(--blue); background: var(--blue-100); }
 .profile-menu-divider { height: 1px; background: var(--gray-100); margin: 6px 4px; }
 .login-logo {
-  width: 900px;
+  width: 1200px;
   height: auto;
   max-width: 78%;
   object-fit: contain;
