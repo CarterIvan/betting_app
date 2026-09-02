@@ -1,10 +1,16 @@
 // Admin-only: permanently resets the league to a fresh, empty state.
 //
-// Two phases, ordered to minimize damage if something fails partway:
-//   1. Every non-admin player's actual Supabase Auth account is deleted
-//      first. This requires the Admin API (service_role) — a Postgres
-//      function cannot safely do this itself.
-//   2. Only once every account removal has succeeded (or there was
+// Three phases, ordered to minimize damage if something fails partway:
+//   1. clear_result_correction_and_announcement_data() (SQL RPC, migration
+//      0015) wipes the Result Correction and League Announcements tables.
+//      This has to run FIRST — those tables reference players with ON
+//      DELETE NO ACTION (deliberately, to protect a single targeted
+//      admin_delete_player() call — see that migration), so step 2 below
+//      cannot remove a player who still has any row in them.
+//   2. Every non-admin player's actual Supabase Auth account is deleted.
+//      This requires the Admin API (service_role) — a Postgres function
+//      cannot safely do this itself.
+//   3. Only once every account removal has succeeded (or there was
 //      nothing to remove) does reset_league_data() (SQL RPC, migration
 //      0005/0006) run, wiping chat messages, predictions, matches, and
 //      resetting cached points and the prize distribution. That RPC's own
@@ -18,7 +24,9 @@
 // as this originally did) means: if account removal fails partway, the
 // competition's matches/predictions/chat/points are untouched — the
 // smaller, more recoverable side effect is the one left behind on failure,
-// never the larger one.
+// never the larger one. Step 1 is a genuine prerequisite for step 2 (not
+// optional), so it's the one thing here that necessarily commits before
+// player removal is even attempted.
 //
 // See _shared/admin.ts for how the caller's admin status is verified
 // before any of this runs.
@@ -36,6 +44,21 @@ Deno.serve(async (req: Request) => {
     }
 
     const { callerClient, adminClient } = await requireAdmin(req)
+
+    // result_correction_votes/requests and league_announcement_reads/
+    // announcements (migrations 0012/0014) reference players with ON
+    // DELETE NO ACTION — deliberately, to stop a targeted
+    // admin_delete_player() call from removing an inconvenient voter. A
+    // full reset is a different, all-encompassing operation, so those
+    // rows have to be cleared explicitly before any non-admin player can
+    // be removed below. See migration 0015.
+    const { error: clearEngagementError } = await callerClient.rpc(
+      'clear_result_correction_and_announcement_data'
+    )
+    if (clearEngagementError) {
+      logSupabaseError('clear_result_correction_and_announcement_data RPC', clearEngagementError)
+      throw new HttpError(500, classifyRpcError(clearEngagementError))
+    }
 
     const { data: playersToRemove, error: listError } = await adminClient
       .from('players')
