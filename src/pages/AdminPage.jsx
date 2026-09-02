@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   ArrowLeft, ShieldCheck, Crown, Plus, ListChecks, Users, Settings, Landmark,
-  ChevronRight, CheckCircle2, Calculator,
+  ChevronRight, CheckCircle2, Calculator, Shield,
 } from 'lucide-react'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
@@ -13,10 +13,12 @@ import AdminAddPlayerForm from '../components/AdminAddPlayerForm.jsx'
 import AdminPrizeForm from '../components/AdminPrizeForm.jsx'
 import AdminDangerZone from '../components/AdminDangerZone.jsx'
 import AdminLeagueLogo from '../components/AdminLeagueLogo.jsx'
+import AdminTeamsList from '../components/AdminTeamsList.jsx'
 
 const MENU = [
   { key: 'add', titleKey: 'admin.menuAddMatch', subKey: 'admin.menuAddMatchSub', icon: Plus },
   { key: 'matches', titleKey: 'admin.menuMatches', subKey: 'admin.menuMatchesSub', icon: ListChecks },
+  { key: 'teams', titleKey: 'admin.menuTeams', subKey: 'admin.menuTeamsSub', icon: Shield },
   { key: 'players', titleKey: 'admin.menuPlayers', subKey: 'admin.menuPlayersSub', icon: Users },
   { key: 'prizes', titleKey: 'admin.menuPrizes', subKey: 'admin.menuPrizesSub', icon: Landmark },
   { key: 'settings', titleKey: 'admin.menuSettings', subKey: 'admin.menuSettingsSub', icon: Settings },
@@ -130,6 +132,8 @@ export default function AdminPage({ onNavigate }) {
       {view === 'matches' && (
         <AdminMatchList matches={sorted} onUpdate={updateMatch} onDelete={deleteMatch} onFinish={handleFinish} />
       )}
+
+      {view === 'teams' && <AdminTeamsList />}
 
       {view === 'players' && (
         <>

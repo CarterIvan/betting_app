@@ -1162,6 +1162,69 @@ img { max-width: 100%; display: block; }
 .admin-danger-zone { margin-top: 30px; border: 1.5px dashed #f4c9c7; border-radius: var(--radius-lg); padding: 16px; background: var(--red-bg); }
 .admin-danger-zone p { font-size: 12px; color: var(--red); font-weight: 600; margin: 0 0 10px; }
 
+/* ==========================================================================
+   ADMIN > TIMOVI (team library)
+   ========================================================================== */
+.admin-teams-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
+.admin-team-row {
+  display: flex; align-items: center; gap: 12px; background: var(--white); border: 1px solid var(--gray-100);
+  border-radius: var(--radius-md); padding: 10px 14px; box-shadow: var(--shadow-sm);
+}
+.admin-team-row-clickable { width: 100%; text-align: left; cursor: pointer; }
+.admin-team-row-clickable:active { transform: scale(0.99); }
+.admin-team-name { flex: 1; font-weight: 700; font-size: 13.5px; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-team-locked { color: var(--gray-400); flex-shrink: 0; display: flex; }
+.admin-team-delete { color: var(--red); flex-shrink: 0; display: flex; padding: 4px; cursor: pointer; }
+.admin-team-delete:hover { color: #b91c1c; }
+
+.team-form { display: flex; flex-direction: column; }
+.team-form-title { font-weight: 800; color: var(--navy); font-size: 13px; margin-bottom: 12px; }
+.team-form-logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.team-form-logo-preview {
+  width: 52px; height: 52px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--gray-100);
+  display: flex; align-items: center; justify-content: center; color: var(--gray-400); overflow: hidden; flex-shrink: 0;
+}
+.team-form-logo-preview img { width: 100%; height: 100%; object-fit: contain; }
+
+/* ==========================================================================
+   TEAM PICKER (searchable team select, replaces plain <select>)
+   ========================================================================== */
+.team-picker-trigger {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; border: 1.5px solid var(--gray-200); border-radius: var(--radius-md);
+  padding: 10px 14px; background: var(--white); color: var(--text); font-size: 14px; font-weight: 600;
+  cursor: pointer; text-align: left;
+}
+.team-picker-trigger-selected { display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; }
+.team-picker-trigger-placeholder { color: var(--gray-400); font-weight: 500; }
+.team-picker-modal {
+  width: 100%; max-width: 360px; max-height: 80vh; background: var(--white);
+  border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); padding: 16px;
+  display: flex; flex-direction: column; animation: modalCardIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.team-picker-search {
+  display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 10px; color: var(--gray-400); flex-shrink: 0;
+}
+.team-picker-search input { border: none; outline: none; flex: 1; font-size: 14px; color: var(--text); background: none; }
+.team-picker-list { overflow-y: auto; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.team-picker-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; border: none; background: none;
+  padding: 9px 8px; border-radius: var(--radius-sm); cursor: pointer; text-align: left; font-size: 13.5px; font-weight: 600; color: var(--text);
+}
+.team-picker-item:hover { background: var(--bg-soft); }
+.team-picker-item.selected { background: var(--gold-100); color: var(--gold-700); }
+.team-picker-item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-picker-item-code { font-size: 11px; font-weight: 800; color: var(--gray-400); flex-shrink: 0; }
+.team-picker-item.selected .team-picker-item-code { color: var(--gold-600); }
+.team-picker-empty { text-align: center; padding: 18px 10px; color: var(--gray-500); font-size: 13px; }
+.team-picker-add {
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+  border: 1.5px dashed var(--gold-600); border-radius: var(--radius-md); padding: 10px; margin-top: 6px;
+  background: var(--gold-100); color: var(--gold-700); font-size: 13px; font-weight: 800; cursor: pointer; flex-shrink: 0;
+}
+.team-picker-add:active { transform: scale(0.98); }
+
 .admin-confirm {
   display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 12px;
 }

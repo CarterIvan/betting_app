@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
+import TeamPicker from './TeamPicker.jsx'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 
@@ -40,24 +41,18 @@ export default function AdminMatchForm({ onAdd }) {
     <form className="card" onSubmit={handleSubmit} style={{ marginBottom: 22 }}>
       {error && <div className="login-error">{error}</div>}
       <div className="admin-form-grid">
-        <div className="field">
-          <label>{t('admin.homeTeam')}</label>
-          <select value={form.homeTeam} onChange={update('homeTeam')}>
-            <option value="">{t('admin.selectTeam')}</option>
-            {teams.map((team) => (
-              <option key={team.id} value={team.id}>{team.name}</option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label>{t('admin.awayTeam')}</label>
-          <select value={form.awayTeam} onChange={update('awayTeam')}>
-            <option value="">{t('admin.selectTeam')}</option>
-            {teams.map((team) => (
-              <option key={team.id} value={team.id}>{team.name}</option>
-            ))}
-          </select>
-        </div>
+        <TeamPicker
+          label={t('admin.homeTeam')}
+          teams={teams}
+          value={form.homeTeam}
+          onChange={(teamId) => setForm((f) => ({ ...f, homeTeam: teamId }))}
+        />
+        <TeamPicker
+          label={t('admin.awayTeam')}
+          teams={teams}
+          value={form.awayTeam}
+          onChange={(teamId) => setForm((f) => ({ ...f, awayTeam: teamId }))}
+        />
         <div className="field">
           <label>{t('admin.date')}</label>
           <input type="date" value={form.date} onChange={update('date')} />

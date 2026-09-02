@@ -140,6 +140,7 @@ export function AppDataProvider({ children }) {
   }, [currentUser, accessBlocked])
 
   const refetchPlayers = useCallback(() => playersService.getAll().then(setPlayers), [])
+  const refetchTeams = useCallback(() => teamsService.getAll().then(setTeams), [])
   // Never rejects — an optional enhancement (see migration 0010), so a
   // missing RPC (not yet deployed) must never surface as a failure to any
   // caller, e.g. savePrediction's follow-up refetch below.
@@ -224,6 +225,38 @@ export function AppDataProvider({ children }) {
       await Promise.all([refetchMatches(), refetchPredictions()])
     },
     [refetchMatches, refetchPredictions]
+  )
+
+  /** Admin-only (RLS — see migration 0011). Returns the new team's id so
+   * the Add Match form (or its embedded "+ Add team" flow) can select it
+   * immediately without waiting on a separate lookup. */
+  const createTeam = useCallback(
+    async (teamData) => {
+      const id = await teamsService.create(teamData)
+      await refetchTeams()
+      return id
+    },
+    [refetchTeams]
+  )
+
+  /** Admin-only, restricted to custom teams (RLS — see migration 0011). */
+  const updateTeam = useCallback(
+    async (teamId, teamData) => {
+      await teamsService.update(teamId, teamData)
+      await refetchTeams()
+    },
+    [refetchTeams]
+  )
+
+  /** Admin-only, permanent, restricted to custom teams (RLS — see
+   * migration 0011). Rejects with a specific error if the team is still
+   * used by a match (see teamsService.remove). */
+  const deleteTeam = useCallback(
+    async (teamId) => {
+      await teamsService.remove(teamId)
+      await refetchTeams()
+    },
+    [refetchTeams]
   )
 
   /** The entire scoring pipeline runs server-side inside finish_match() —
@@ -402,6 +435,9 @@ export function AppDataProvider({ children }) {
     addMatch,
     updateMatch,
     deleteMatch,
+    createTeam,
+    updateTeam,
+    deleteTeam,
     finishMatch,
     recalculateAll,
     setPlayerPaymentStatus,

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Pencil, Trash2, ChevronDown, ChevronUp, Check, X } from 'lucide-react'
 import TeamBadge from './TeamBadge.jsx'
+import TeamPicker from './TeamPicker.jsx'
 import { getMatchStatus, MATCH_STATUS } from '../utils/matchState'
 import { formatDate } from '../utils/formatters'
 import { useAppData } from '../context/AppDataContext.jsx'
@@ -70,18 +71,18 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
       <div className="admin-match-card">
         {editError && <div className="login-error">{editError}</div>}
         <div className="admin-form-grid">
-          <div className="field">
-            <label>{t('admin.homeTeam')}</label>
-            <select value={editForm.homeTeam} onChange={(e) => setEditForm((f) => ({ ...f, homeTeam: e.target.value }))}>
-              {teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
-            </select>
-          </div>
-          <div className="field">
-            <label>{t('admin.awayTeam')}</label>
-            <select value={editForm.awayTeam} onChange={(e) => setEditForm((f) => ({ ...f, awayTeam: e.target.value }))}>
-              {teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
-            </select>
-          </div>
+          <TeamPicker
+            label={t('admin.homeTeam')}
+            teams={teams}
+            value={editForm.homeTeam}
+            onChange={(teamId) => setEditForm((f) => ({ ...f, homeTeam: teamId }))}
+          />
+          <TeamPicker
+            label={t('admin.awayTeam')}
+            teams={teams}
+            value={editForm.awayTeam}
+            onChange={(teamId) => setEditForm((f) => ({ ...f, awayTeam: teamId }))}
+          />
           <div className="field">
             <label>{t('admin.date')}</label>
             <input type="date" value={editForm.date} onChange={(e) => setEditForm((f) => ({ ...f, date: e.target.value }))} />
