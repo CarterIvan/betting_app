@@ -1,13 +1,14 @@
 import { CalendarClock } from 'lucide-react'
 import TeamBadge from './TeamBadge.jsx'
 import PredictionInput from './PredictionInput.jsx'
+import PredictionCompletionRing from './PredictionCompletionRing.jsx'
 import { getMatchStatus, MATCH_STATUS } from '../utils/matchState'
 import { formatDate } from '../utils/formatters'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 
 export default function MatchCard({ match }) {
-  const { currentUser, predictions, savePrediction, getTeamById } = useAppData()
+  const { currentUser, predictions, predictionCompletion, savePrediction, getTeamById } = useAppData()
   const { t, language } = useLanguage()
   const home = getTeamById(match.homeTeam)
   const away = getTeamById(match.awayTeam)
@@ -29,6 +30,8 @@ export default function MatchCard({ match }) {
     [MATCH_STATUS.FINISHED]: t('matches.statusFinished'),
   }[status]
 
+  const completion = predictionCompletion.find((c) => c.matchId === match.id)
+
   return (
     <div className="match-card">
       <div className="match-meta">
@@ -36,10 +39,18 @@ export default function MatchCard({ match }) {
           <CalendarClock size={12} />
           {formatDate(match.date, language)} · {match.startTime}
         </span>
-        <span className={`match-status-chip ${status.toLowerCase()}`}>
-          {status === MATCH_STATUS.LIVE && <span className="live-dot" />}
-          {statusLabel}
-        </span>
+        <div className="match-meta-right">
+          {completion && (
+            <PredictionCompletionRing
+              submittedCount={completion.submittedCount}
+              totalPlayers={completion.totalPlayers}
+            />
+          )}
+          <span className={`match-status-chip ${status.toLowerCase()}`}>
+            {status === MATCH_STATUS.LIVE && <span className="live-dot" />}
+            {statusLabel}
+          </span>
+        </div>
       </div>
 
       <div className="match-teams">

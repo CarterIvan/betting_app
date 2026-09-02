@@ -74,6 +74,7 @@ export default {
     errorLimitReached: 'Tip je uzamknutý — vyčerpali ste obe možnosti zmeny.',
     errorMatchStarted: 'Zápas už začal, tip už nie je možné uložiť.',
     errorSaveFailed: 'Tip sa nepodarilo uložiť. Skús to znova.',
+    predictionCompletionHint: '{{count}} z {{total}} hráčov už zadalo svoj tip.',
   },
 
   live: {

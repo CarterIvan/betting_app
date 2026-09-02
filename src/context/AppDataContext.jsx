@@ -28,6 +28,7 @@ export function AppDataProvider({ children }) {
   const [teams, setTeams] = useState([])
   const [matches, setMatches] = useState([])
   const [predictions, setPredictions] = useState([])
+  const [predictionCompletion, setPredictionCompletion] = useState([])
   const [chatMessages, setChatMessages] = useState([])
   const [readState, setReadState] = useState({})
   const [settings, setSettings] = useState(null)
@@ -76,6 +77,7 @@ export function AppDataProvider({ children }) {
       setTeams([])
       setMatches([])
       setPredictions([])
+      setPredictionCompletion([])
       setChatMessages([])
       setSettings(null)
       return
@@ -111,6 +113,22 @@ export function AppDataProvider({ children }) {
         if (!cancelled) setDataLoading(false)
       })
 
+    // Deliberately its OWN promise chain, not part of the Promise.all above —
+    // this is an optional enhancement (see migration 0010's
+    // get_predictions_completion RPC). Before that migration is applied in
+    // a given environment the RPC doesn't exist and this rejects (PGRST202);
+    // that must never be able to block players/matches/teams/predictions
+    // from loading, so its failure is caught right here and just leaves the
+    // completion ring unavailable rather than surfacing anywhere else.
+    predictionsService
+      .getCompletion()
+      .then((completion) => {
+        if (!cancelled) setPredictionCompletion(completion)
+      })
+      .catch(() => {
+        if (!cancelled) setPredictionCompletion([])
+      })
+
     const unsubscribeChat = chatService.subscribe((message) => {
       setChatMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]))
     })
@@ -122,6 +140,17 @@ export function AppDataProvider({ children }) {
   }, [currentUser, accessBlocked])
 
   const refetchPlayers = useCallback(() => playersService.getAll().then(setPlayers), [])
+  // Never rejects — an optional enhancement (see migration 0010), so a
+  // missing RPC (not yet deployed) must never surface as a failure to any
+  // caller, e.g. savePrediction's follow-up refetch below.
+  const refetchPredictionCompletion = useCallback(
+    () =>
+      predictionsService
+        .getCompletion()
+        .then(setPredictionCompletion)
+        .catch(() => setPredictionCompletion([])),
+    []
+  )
   const refetchMatches = useCallback(() => matchesService.getAll().then(setMatches), [])
   const refetchPredictions = useCallback(() => predictionsService.getAll().then(setPredictions), [])
   const refetchSettings = useCallback(() => settingsService.get().then(setSettings), [])
@@ -167,10 +196,10 @@ export function AppDataProvider({ children }) {
     async (matchId, predictedHome, predictedAway) => {
       if (!currentUser) return null
       const saved = await predictionsService.save(currentUser.id, matchId, predictedHome, predictedAway)
-      await refetchPredictions()
+      await Promise.all([refetchPredictions(), refetchPredictionCompletion()])
       return saved
     },
-    [currentUser, refetchPredictions]
+    [currentUser, refetchPredictions, refetchPredictionCompletion]
   )
 
   const addMatch = useCallback(
@@ -359,6 +388,7 @@ export function AppDataProvider({ children }) {
     teams,
     matches,
     predictions,
+    predictionCompletion,
     chatMessages,
     settings,
     leagueLogoUrl,

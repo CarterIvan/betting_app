@@ -70,6 +70,7 @@ export default {
     errorLimitReached: 'Tipp ist gesperrt — Sie haben beide Änderungen bereits genutzt.',
     errorMatchStarted: 'Das Spiel hat bereits begonnen, der Tipp kann nicht mehr gespeichert werden.',
     errorSaveFailed: 'Der Tipp konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.',
+    predictionCompletionHint: '{{count}} von {{total}} Spielern haben ihren Tipp abgegeben.',
   },
 
   live: {

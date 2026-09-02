@@ -70,6 +70,7 @@ export default {
     errorLimitReached: 'Tip je zaključan — iskoristili ste obe izmene.',
     errorMatchStarted: 'Meč je već počeo, tip više nije moguće sačuvati.',
     errorSaveFailed: 'Tip nije moguće sačuvati. Pokušajte ponovo.',
+    predictionCompletionHint: '{{count}} od {{total}} igrača je unelo svoj tip.',
   },
 
   live: {

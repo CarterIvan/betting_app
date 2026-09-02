@@ -70,6 +70,7 @@ export default {
     errorLimitReached: 'Pronóstico bloqueado — ya has usado los dos cambios disponibles.',
     errorMatchStarted: 'El partido ya ha comenzado, el pronóstico ya no se puede guardar.',
     errorSaveFailed: 'No se pudo guardar el pronóstico. Inténtalo de nuevo.',
+    predictionCompletionHint: '{{count}} de {{total}} jugadores han enviado su pronóstico.',
   },
 
   live: {

@@ -73,6 +73,7 @@ export default {
     errorLimitReached: 'Tip is locked — you have used both changes.',
     errorMatchStarted: 'The match has already started, the tip can no longer be saved.',
     errorSaveFailed: 'Could not save the tip. Please try again.',
+    predictionCompletionHint: '{{count}} of {{total}} players have submitted their prediction.',
   },
 
   live: {

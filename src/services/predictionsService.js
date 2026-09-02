@@ -57,6 +57,21 @@ async function save(playerId, matchId, predictedHome, predictedAway) {
   return mapPrediction(data)
 }
 
-const predictionsService = { getAll, save }
+/** Aggregate-only completion count per non-finished match — "3 of 13
+ * players have submitted", never who or what (see migration 0010's
+ * get_predictions_completion, SECURITY DEFINER, returns counts only). This
+ * is how the Dashboard's completion ring gets a real number for an
+ * upcoming match without ever fetching other players' prediction rows. */
+async function getCompletion() {
+  const { data, error } = await supabase.rpc('get_predictions_completion')
+  if (error) throw error
+  return data.map((row) => ({
+    matchId: row.match_id,
+    submittedCount: Number(row.submitted_count),
+    totalPlayers: Number(row.total_players),
+  }))
+}
+
+const predictionsService = { getAll, save, getCompletion }
 
 export default predictionsService

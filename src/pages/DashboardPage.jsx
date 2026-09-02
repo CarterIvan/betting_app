@@ -28,7 +28,7 @@ export default function DashboardPage() {
       <div className="dashboard-brand">
         <img src={leagueLogoUrl || '/tipovacka-logo.png'} alt="Tipovačka Liga Majstrov" className="dashboard-logo" />
 
-        <div className="dashboard-brand-sub">SKP2</div>
+        
       </div>
 
       <Podium leaderboard={leaderboard.slice(0, 3)} />
