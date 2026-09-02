@@ -52,12 +52,19 @@ async function getEmail(playerId) {
   return data
 }
 
-/** Admin-only, permanent (RPC re-checks independently — see migration
- * 0008). Removes ONLY this player's profile/predictions/chat from this
- * competition — never their Supabase Auth account. */
+/** Admin-only, permanent (RPC re-checks independently — see migrations
+ * 0008/0016). Removes ONLY this player's profile/predictions/chat from
+ * this competition — never their Supabase Auth account. Blocked (22023)
+ * while the player is the requester of, or an eligible voter on, a
+ * still-pending result correction request — see migration 0016. */
 async function deletePlayer(playerId) {
   const { error } = await supabase.rpc('admin_delete_player', { p_player_id: playerId })
-  if (error) throw error
+  if (error) {
+    if (error.code === '22023') {
+      throw new Error('admin.deletePlayerCorrectionInProgress')
+    }
+    throw error
+  }
 }
 
 const playersService = { getAll, setPaymentStatus, setPaymentAmount, getEmail, deletePlayer }

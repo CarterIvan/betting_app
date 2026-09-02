@@ -256,6 +256,7 @@ export default {
     confirmDeletePlayerMessage: 'Estás a punto de eliminar permanentemente a {{name}} de esta liga. Esta acción no se puede deshacer.',
     deletePlayerConfirmButton: 'Eliminar jugador',
     deletePlayerFailed: 'No se pudo eliminar al jugador.',
+    deletePlayerCorrectionInProgress: 'Este jugador no se puede eliminar mientras esté en curso una corrección de resultado en la que participa.',
     deletingPlayer: 'Eliminando…',
     predefinedTeamsTitle: 'Equipos',
     predefinedTeamHint: 'Equipo predefinido — no se puede eliminar',

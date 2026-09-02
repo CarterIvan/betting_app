@@ -256,6 +256,7 @@ export default {
     confirmDeletePlayerMessage: 'Trajno ćete ukloniti igrača {{name}} iz ove lige. Ova akcija se ne može poništiti.',
     deletePlayerConfirmButton: 'Obriši igrača',
     deletePlayerFailed: 'Igrača nije moguće obrisati.',
+    deletePlayerCorrectionInProgress: 'Ovaj igrač se ne može obrisati dok je u toku ispravka rezultata u kojoj učestvuje.',
     deletingPlayer: 'Brisanje…',
     predefinedTeamsTitle: 'Timovi',
     predefinedTeamHint: 'Predefinisani tim — ne može se obrisati',

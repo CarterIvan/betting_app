@@ -260,6 +260,7 @@ export default {
     confirmDeletePlayerMessage: 'Chystáš sa natrvalo odstrániť hráča {{name}} z tejto ligy. Túto akciu nie je možné vrátiť späť.',
     deletePlayerConfirmButton: 'Odstrániť hráča',
     deletePlayerFailed: 'Hráča sa nepodarilo odstrániť.',
+    deletePlayerCorrectionInProgress: 'Tohto hráča nie je možné odstrániť, kým prebieha oprava výsledku, ktorej sa týka.',
     deletingPlayer: 'Odstraňuje sa…',
     predefinedTeamsTitle: 'Tímy',
     predefinedTeamHint: 'Predvolený tím — nedá sa odstrániť',

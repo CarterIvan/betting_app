@@ -259,6 +259,7 @@ export default {
     confirmDeletePlayerMessage: 'You are about to permanently remove {{name}} from this league. This action cannot be undone.',
     deletePlayerConfirmButton: 'Delete Player',
     deletePlayerFailed: 'Could not delete the player.',
+    deletePlayerCorrectionInProgress: 'This player cannot be deleted while a result correction they are involved in is still in progress.',
     deletingPlayer: 'Deleting…',
     predefinedTeamsTitle: 'Teams',
     predefinedTeamHint: 'Predefined team — cannot be deleted',

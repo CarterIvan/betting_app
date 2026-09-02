@@ -256,6 +256,7 @@ export default {
     confirmDeletePlayerMessage: 'Du bist dabei, {{name}} dauerhaft aus dieser Liga zu entfernen. Diese Aktion kann nicht rückgängig gemacht werden.',
     deletePlayerConfirmButton: 'Spieler löschen',
     deletePlayerFailed: 'Der Spieler konnte nicht gelöscht werden.',
+    deletePlayerCorrectionInProgress: 'Dieser Spieler kann nicht gelöscht werden, solange eine Ergebniskorrektur läuft, an der er beteiligt ist.',
     deletingPlayer: 'Wird gelöscht…',
     predefinedTeamsTitle: 'Teams',
     predefinedTeamHint: 'Vordefiniertes Team — kann nicht gelöscht werden',
