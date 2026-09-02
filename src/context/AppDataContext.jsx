@@ -11,6 +11,7 @@ import logoService from '../services/logoService'
 import adminActionsService from '../services/adminActionsService'
 import dataService from '../services/dataService'
 import resultCorrectionService from '../services/resultCorrectionService'
+import announcementService from '../services/announcementService'
 import { getTeamById as findTeam } from '../data/teams'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { getMatchStatus, MATCH_STATUS } from '../utils/matchState'
@@ -32,6 +33,8 @@ export function AppDataProvider({ children }) {
   const [predictionCompletion, setPredictionCompletion] = useState([])
   const [correctionRequests, setCorrectionRequests] = useState([])
   const [correctionVotes, setCorrectionVotes] = useState([])
+  const [latestAnnouncement, setLatestAnnouncement] = useState(null)
+  const [myAnnouncementReadIds, setMyAnnouncementReadIds] = useState([])
   const [chatMessages, setChatMessages] = useState([])
   const [readState, setReadState] = useState({})
   const [settings, setSettings] = useState(null)
@@ -83,6 +86,8 @@ export function AppDataProvider({ children }) {
       setPredictionCompletion([])
       setCorrectionRequests([])
       setCorrectionVotes([])
+      setLatestAnnouncement(null)
+      setMyAnnouncementReadIds([])
       setChatMessages([])
       setSettings(null)
       return
@@ -153,6 +158,24 @@ export function AppDataProvider({ children }) {
         setCorrectionVotes([])
       })
 
+    // Same reasoning again — its own isolated chain, not the critical
+    // Promise.all (see migration 0014). Before that migration exists in a
+    // given environment this table doesn't exist and this rejects; that
+    // must never block the rest of the app from loading, so it's caught
+    // right here and just leaves the announcement popup unavailable
+    // rather than surfacing anywhere else.
+    Promise.all([announcementService.getLatest(), announcementService.getMyReadIds()])
+      .then(([announcement, readIds]) => {
+        if (cancelled) return
+        setLatestAnnouncement(announcement)
+        setMyAnnouncementReadIds(readIds)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setLatestAnnouncement(null)
+        setMyAnnouncementReadIds([])
+      })
+
     const unsubscribeChat = chatService.subscribe((message) => {
       setChatMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]))
     })
@@ -190,6 +213,21 @@ export function AppDataProvider({ children }) {
         .catch(() => {
           setCorrectionRequests([])
           setCorrectionVotes([])
+        }),
+    []
+  )
+  // Never rejects — same reasoning as refetchCorrections above (see
+  // migration 0014).
+  const refetchAnnouncement = useCallback(
+    () =>
+      Promise.all([announcementService.getLatest(), announcementService.getMyReadIds()])
+        .then(([announcement, readIds]) => {
+          setLatestAnnouncement(announcement)
+          setMyAnnouncementReadIds(readIds)
+        })
+        .catch(() => {
+          setLatestAnnouncement(null)
+          setMyAnnouncementReadIds([])
         }),
     []
   )
@@ -345,6 +383,31 @@ export function AppDataProvider({ children }) {
     [refetchCorrections, refetchMatches, refetchPredictions, refetchPlayers]
   )
 
+  /** Admin-only (RLS — see migration 0014). Always publishes a brand new
+   * announcement (never edits one in place) — see announcementService for
+   * why — and self-acknowledges it so the publishing admin never sees
+   * their own announcement as a member popup. */
+  const publishAnnouncement = useCallback(
+    async (title, message) => {
+      if (!currentUser) return null
+      const announcement = await announcementService.publish(title, message, currentUser.id)
+      await refetchAnnouncement()
+      return announcement
+    },
+    [currentUser, refetchAnnouncement]
+  )
+
+  /** RLS re-checks independently that a player can only acknowledge on
+   * their own behalf (see migration 0014). */
+  const acknowledgeAnnouncement = useCallback(
+    async (announcementId) => {
+      if (!currentUser) return
+      await announcementService.acknowledge(announcementId, currentUser.id)
+      await refetchAnnouncement()
+    },
+    [currentUser, refetchAnnouncement]
+  )
+
   /** Admin-only (RLS + trigger — see migration 0004). Flips a player's paid
    * status; access is derived from this everywhere else in the app, so
    * nothing else needs updating by hand. */
@@ -493,6 +556,8 @@ export function AppDataProvider({ children }) {
     predictionCompletion,
     correctionRequests,
     correctionVotes,
+    latestAnnouncement,
+    myAnnouncementReadIds,
     chatMessages,
     settings,
     leagueLogoUrl,
@@ -512,6 +577,8 @@ export function AppDataProvider({ children }) {
     finishMatch,
     requestResultCorrection,
     voteOnResultCorrection,
+    publishAnnouncement,
+    acknowledgeAnnouncement,
     recalculateAll,
     setPlayerPaymentStatus,
     updatePrizeSettings,
