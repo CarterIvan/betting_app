@@ -1141,6 +1141,18 @@ img { max-width: 100%; display: block; }
 .admin-menu-chevron { color: var(--gray-400); flex-shrink: 0; }
 
 .admin-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.admin-match-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.admin-match-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 12px; border-radius: 999px; border: 1.5px solid var(--gray-200); background: var(--white);
+  color: var(--text-soft); font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.admin-match-tab.active { background: var(--navy); border-color: var(--navy); color: var(--white); }
+.admin-match-tab-count {
+  font-size: 11px; font-weight: 800; background: var(--gray-100); color: var(--gray-600);
+  padding: 1px 7px; border-radius: 999px; min-width: 18px; text-align: center;
+}
+.admin-match-tab.active .admin-match-tab-count { background: rgba(255, 255, 255, 0.2); color: var(--white); }
 .admin-match-card { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 14px; margin-bottom: 12px; }
 .admin-match-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .admin-match-teams { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }

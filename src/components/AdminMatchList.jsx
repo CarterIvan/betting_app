@@ -3,7 +3,7 @@ import { Pencil, Trash2, ChevronDown, ChevronUp, Check, X } from 'lucide-react'
 import TeamBadge from './TeamBadge.jsx'
 import TeamPicker from './TeamPicker.jsx'
 import { getMatchStatus, MATCH_STATUS } from '../utils/matchState'
-import { formatDate } from '../utils/formatters'
+import { formatDate, cx } from '../utils/formatters'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 
@@ -185,16 +185,50 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
   )
 }
 
+/** Splits the already-sorted `matches` prop (see AdminPage's `sorted` —
+ * non-finished first, finished last, each group by kickoff desc) into two
+ * tabs purely by filtering, so each tab's relative order is exactly what
+ * it already was in that combined list — no new sort logic here, and
+ * nothing about how an individual match is edited/finished/deleted
+ * changes; AdminMatchRow is reused completely unmodified for both tabs. */
 export default function AdminMatchList({ matches, onUpdate, onDelete, onFinish }) {
   const { t } = useLanguage()
-  if (matches.length === 0) {
-    return <div className="empty-state">{t('admin.noMatches')}</div>
-  }
+  const [tab, setTab] = useState('active') // active | finished
+
+  const activeMatches = matches.filter((m) => !m.finished)
+  const finishedMatches = matches.filter((m) => m.finished)
+  const visible = tab === 'active' ? activeMatches : finishedMatches
+
   return (
     <>
-      {matches.map((match) => (
-        <AdminMatchRow key={match.id} match={match} onUpdate={onUpdate} onDelete={onDelete} onFinish={onFinish} />
-      ))}
+      <div className="admin-match-tabs">
+        <button
+          type="button"
+          className={cx('admin-match-tab', tab === 'active' && 'active')}
+          onClick={() => setTab('active')}
+        >
+          {t('admin.tabActiveMatches')}
+          <span className="admin-match-tab-count">{activeMatches.length}</span>
+        </button>
+        <button
+          type="button"
+          className={cx('admin-match-tab', tab === 'finished' && 'active')}
+          onClick={() => setTab('finished')}
+        >
+          {t('admin.tabFinishedMatches')}
+          <span className="admin-match-tab-count">{finishedMatches.length}</span>
+        </button>
+      </div>
+
+      {visible.length === 0 ? (
+        <div className="empty-state">
+          {t(tab === 'active' ? 'admin.noActiveMatches' : 'admin.noFinishedMatches')}
+        </div>
+      ) : (
+        visible.map((match) => (
+          <AdminMatchRow key={match.id} match={match} onUpdate={onUpdate} onDelete={onDelete} onFinish={onFinish} />
+        ))
+      )}
     </>
   )
 }
