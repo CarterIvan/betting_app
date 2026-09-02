@@ -100,10 +100,13 @@ async function create({ name, shortName, logoFile, primaryColor, secondaryColor 
   return id
 }
 
-/** Admin-only (RLS — restricted to is_custom rows only; a predefined team
- * can never reach this regardless of what the client sends, see migration
- * 0011). Logo is only touched if a new file was actually picked. */
-async function update(teamId, { name, shortName, logoFile, primaryColor, secondaryColor }) {
+/** Admin-only (RLS — see migration 0011). For a predefined team, only logo/
+ * colors can actually change — a trigger rejects name/short_name/country on
+ * those rows regardless of what's sent here; omitting them (as the "change
+ * badge" flow does) already avoids attempting that in the first place.
+ * `removeLogo` reverts to the generated crest (TeamBadge's existing NULL
+ * -logo fallback) — only used if no new file was also picked. */
+async function update(teamId, { name, shortName, logoFile, removeLogo, primaryColor, secondaryColor }) {
   const patch = {
     name,
     short_name: shortName,
@@ -112,6 +115,8 @@ async function update(teamId, { name, shortName, logoFile, primaryColor, seconda
   }
   if (logoFile) {
     patch.logo = await uploadLogo(teamId, logoFile)
+  } else if (removeLogo) {
+    patch.logo = null
   }
 
   const { error } = await supabase.from('teams').update(patch).eq('id', teamId)

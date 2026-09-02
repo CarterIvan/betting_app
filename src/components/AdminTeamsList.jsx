@@ -2,18 +2,20 @@ import { useState } from 'react'
 import { Lock, Trash2, Plus, AlertTriangle } from 'lucide-react'
 import TeamBadge from './TeamBadge.jsx'
 import AdminTeamForm from './AdminTeamForm.jsx'
+import AdminChangeTeamBadgeModal from './AdminChangeTeamBadgeModal.jsx'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 
-/** Admin > Timovi — the 36 predefined Champions League teams (locked, read
- * -only, see migration 0011) plus any custom teams the admin has created.
- * Only custom teams are clickable (edit) or deletable — enforced both here
- * (no action wired for a predefined row) and server-side by RLS. */
+/** Admin > Timovi — the 36 predefined Champions League teams (name/
+ * short_name/country/deletion locked, see migration 0011 — only their
+ * logo/colors can change, via "Change badge") plus any custom teams the
+ * admin has created (fully editable, deletable). */
 export default function AdminTeamsList() {
   const { teams, deleteTeam } = useAppData()
   const { t, language } = useLanguage()
   const [view, setView] = useState('list') // list | create | edit
   const [editingTeam, setEditingTeam] = useState(null)
+  const [badgeTeam, setBadgeTeam] = useState(null)
   const [confirmDeleteTeam, setConfirmDeleteTeam] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
@@ -70,7 +72,12 @@ export default function AdminTeamsList() {
         {predefined.map((team) => (
           <div className="admin-team-row" key={team.id}>
             <TeamBadge teamId={team.id} size="sm" />
-            <span className="admin-team-name">{team.name}</span>
+            <div className="admin-team-info">
+              <span className="admin-team-name">{team.name}</span>
+              <button type="button" className="admin-team-change-badge" onClick={() => setBadgeTeam(team)}>
+                {t('admin.changeBadgeButton')}
+              </button>
+            </div>
             <span className="admin-team-locked" title={t('admin.predefinedTeamHint')}>
               <Lock size={14} />
             </span>
@@ -139,6 +146,10 @@ export default function AdminTeamsList() {
             </div>
           </div>
         </div>
+      )}
+
+      {badgeTeam && (
+        <AdminChangeTeamBadgeModal team={badgeTeam} onClose={() => setBadgeTeam(null)} />
       )}
     </>
   )

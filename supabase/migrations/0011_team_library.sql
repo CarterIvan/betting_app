@@ -17,10 +17,15 @@
 --     fallback for a team with no logo — nothing new added here).
 --   - INSERT must self-declare is_custom = true — the app can never create
 --     a "predefined" row.
---   - UPDATE/DELETE both require is_custom = true on the EXISTING row, so
---     neither can ever reach one of the 36 seeded teams, regardless of
---     what the client sends. is_custom itself is not in the UPDATE column
---     grant, so a custom team can't be "promoted" to predefined either.
+--   - DELETE requires is_custom = true on the EXISTING row — a predefined
+--     team can never be deleted, regardless of what the client sends.
+--   - UPDATE is allowed on ANY row (predefined or custom) for logo/colors —
+--     "change the badge of a default team" needs that — but a BEFORE
+--     UPDATE trigger (enforce_predefined_team_identity, below) rejects any
+--     attempt to change name/short_name/country/is_custom on a predefined
+--     row specifically. A custom row has no such restriction. is_custom
+--     itself is also simply not in the UPDATE column grant, so a custom
+--     team can't be "promoted" to predefined either way.
 --
 -- Deleting a custom team still relies on the FK that already exists
 -- (matches.home_team_id/away_team_id → teams.id, no ON DELETE clause —
@@ -51,16 +56,37 @@ create policy teams_admin_insert on public.teams for insert to authenticated
     and exists (select 1 from public.players p where p.id = auth.uid() and p.is_admin)
   );
 
+-- Predefined teams' name/short_name/country/is_custom stay locked via the
+-- trigger below, not via this policy — this policy itself just re-checks
+-- admin status, same as everywhere else.
+create or replace function public.enforce_predefined_team_identity()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not OLD.is_custom then
+    if NEW.name is distinct from OLD.name
+       or NEW.short_name is distinct from OLD.short_name
+       or NEW.country is distinct from OLD.country
+       or NEW.is_custom is distinct from OLD.is_custom then
+      raise exception 'Predvolený tím je možné upraviť iba v logu a farbách.' using errcode = '42501';
+    end if;
+  end if;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_enforce_predefined_team_identity on public.teams;
+create trigger trg_enforce_predefined_team_identity
+  before update on public.teams
+  for each row execute function public.enforce_predefined_team_identity();
+
 drop policy if exists teams_admin_update on public.teams;
 create policy teams_admin_update on public.teams for update to authenticated
-  using (
-    is_custom = true
-    and exists (select 1 from public.players p where p.id = auth.uid() and p.is_admin)
-  )
-  with check (
-    is_custom = true
-    and exists (select 1 from public.players p where p.id = auth.uid() and p.is_admin)
-  );
+  using (exists (select 1 from public.players p where p.id = auth.uid() and p.is_admin))
+  with check (exists (select 1 from public.players p where p.id = auth.uid() and p.is_admin));
 
 drop policy if exists teams_admin_delete on public.teams;
 create policy teams_admin_delete on public.teams for delete to authenticated
