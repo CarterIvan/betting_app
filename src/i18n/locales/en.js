@@ -176,6 +176,7 @@ export default {
     playerTipsCount: 'Player tips ({{count}})',
     tipPointsSuffix: ' · {{points}} pts',
     noTipsYet: 'No tips yet.',
+    tipsLockedUntilKickoff: 'Player picks are hidden until the match starts.',
     noMatches: 'No matches have been created yet.',
     matchAdded: 'Match added.',
     matchCloseFailed: 'Could not close the match.',

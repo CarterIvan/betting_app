@@ -173,6 +173,7 @@ export default {
     playerTipsCount: 'Tipovi igrača ({{count}})',
     tipPointsSuffix: ' · {{points}} b.',
     noTipsYet: 'Još uvek nema tipova.',
+    tipsLockedUntilKickoff: 'Tipovi igrača su skriveni dok meč ne počne.',
     noMatches: 'Još uvek nije kreiran nijedan meč.',
     matchAdded: 'Meč je dodat.',
     matchCloseFailed: 'Meč nije moguće zatvoriti.',

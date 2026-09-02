@@ -177,6 +177,7 @@ export default {
     playerTipsCount: 'Tipy hráčov ({{count}})',
     tipPointsSuffix: ' · {{points}} b.',
     noTipsYet: 'Zatiaľ žiadne tipy.',
+    tipsLockedUntilKickoff: 'Tipy hráčov sú skryté, kým zápas nezačne.',
     noMatches: 'Zatiaľ nie sú vytvorené žiadne zápasy.',
     matchAdded: 'Zápas bol pridaný.',
     matchCloseFailed: 'Zápas sa nepodarilo ukončiť.',

@@ -155,24 +155,30 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
         </button>
       </div>
 
-      <button className="admin-toggle-link" onClick={() => setShowTips((v) => !v)}>
-        {showTips ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-        {' '}{t('admin.playerTipsCount', { count: tips.length })}
-      </button>
+      {status === MATCH_STATUS.UPCOMING ? (
+        <div className="admin-predictions-locked">{t('admin.tipsLockedUntilKickoff')}</div>
+      ) : (
+        <>
+          <button className="admin-toggle-link" onClick={() => setShowTips((v) => !v)}>
+            {showTips ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            {' '}{t('admin.playerTipsCount', { count: tips.length })}
+          </button>
 
-      {showTips && (
-        <div className="admin-predictions-list">
-          {tips.length === 0 && <div className="admin-prediction-item">{t('admin.noTipsYet')}</div>}
-          {tips.map((tip) => (
-            <div className="admin-prediction-item" key={tip.id}>
-              <span>{tip.player.name}</span>
-              <span>
-                {tip.predictedHome} : {tip.predictedAway}
-                {tip.points !== null && tip.points !== undefined ? t('admin.tipPointsSuffix', { points: tip.points }) : ''}
-              </span>
+          {showTips && (
+            <div className="admin-predictions-list">
+              {tips.length === 0 && <div className="admin-prediction-item">{t('admin.noTipsYet')}</div>}
+              {tips.map((tip) => (
+                <div className="admin-prediction-item" key={tip.id}>
+                  <span>{tip.player.name}</span>
+                  <span>
+                    {tip.predictedHome} : {tip.predictedAway}
+                    {tip.points !== null && tip.points !== undefined ? t('admin.tipPointsSuffix', { points: tip.points }) : ''}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   )

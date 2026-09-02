@@ -17,8 +17,11 @@ function mapPrediction(row) {
   }
 }
 
-/** Predictions are readable by every logged-in player — Live/History/Admin
- * all need to show everyone's tips, not just the caller's own. */
+/** Fetches whatever RLS allows the caller to see (see migration 0009): the
+ * caller's own prediction for every match, plus everyone's predictions for
+ * matches that have started or finished — never another player's pick for
+ * a match that hasn't kicked off yet. Live/History/Admin Matches all fetch
+ * through this same call; no separate "admin" or "own" fetch exists. */
 async function getAll() {
   const { data, error } = await supabase.from('predictions').select(SELECT_COLUMNS)
   if (error) throw error

@@ -173,6 +173,7 @@ export default {
     playerTipsCount: 'Pronósticos de jugadores ({{count}})',
     tipPointsSuffix: ' · {{points}} pts',
     noTipsYet: 'Todavía no hay pronósticos.',
+    tipsLockedUntilKickoff: 'Los pronósticos de los jugadores están ocultos hasta que empiece el partido.',
     noMatches: 'Todavía no se ha creado ningún partido.',
     matchAdded: 'Partido añadido.',
     matchCloseFailed: 'No se pudo cerrar el partido.',

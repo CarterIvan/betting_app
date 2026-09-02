@@ -1148,6 +1148,7 @@ img { max-width: 100%; display: block; }
 .admin-predictions-list { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--gray-200); display: flex; flex-direction: column; gap: 6px; }
 .admin-prediction-item { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-soft); font-weight: 600; }
 .admin-toggle-link { font-size: 12px; font-weight: 700; color: var(--blue); background: none; border: none; cursor: pointer; padding: 6px 0 0; display: flex; align-items: center; gap: 4px; }
+.admin-predictions-locked { font-size: 12px; font-weight: 600; color: var(--text-soft); padding: 8px 0 0; }
 .admin-danger-zone { margin-top: 30px; border: 1.5px dashed #f4c9c7; border-radius: var(--radius-lg); padding: 16px; background: var(--red-bg); }
 .admin-danger-zone p { font-size: 12px; color: var(--red); font-weight: 600; margin: 0 0 10px; }
 

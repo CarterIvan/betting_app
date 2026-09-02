@@ -5,7 +5,7 @@ import { useLanguage } from '../i18n/LanguageContext.jsx'
 import LanguageSelector from '../components/LanguageSelector.jsx'
 
 export default function LoginPage() {
-  const { login, leagueLogoUrl } = useAppData()
+  const { login } = useAppData()
   const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -39,7 +39,9 @@ export default function LoginPage() {
         <LanguageSelector />
       </div>
 
-      <img src={leagueLogoUrl || '/tipovacka-logo.png'} alt="Tipovačka Liga Majstrov" className="login-logo" />
+      {/* Always the default logo — never the Admin-uploaded custom one (that's
+          shown only inside the authenticated app, e.g. DashboardPage). */}
+      <img src="/tipovacka-logo.png" alt="Tipovačka Liga Majstrov" className="login-logo" />
      
  
 
