@@ -83,7 +83,7 @@ async function uploadLogo(teamId, file) {
  * exists. Logo is optional — TeamBadge already falls back to a generated
  * crest (primary/secondary colors) when logo is null, exactly like every
  * predefined team does today. */
-async function create({ name, shortName, logoFile }) {
+async function create({ name, shortName, logoFile, primaryColor, secondaryColor }) {
   const id = crypto.randomUUID()
   const logo = logoFile ? await uploadLogo(id, logoFile) : null
 
@@ -93,6 +93,8 @@ async function create({ name, shortName, logoFile }) {
     short_name: shortName,
     logo,
     is_custom: true,
+    primary_color: primaryColor,
+    secondary_color: secondaryColor,
   })
   if (error) throw error
   return id
@@ -101,8 +103,13 @@ async function create({ name, shortName, logoFile }) {
 /** Admin-only (RLS — restricted to is_custom rows only; a predefined team
  * can never reach this regardless of what the client sends, see migration
  * 0011). Logo is only touched if a new file was actually picked. */
-async function update(teamId, { name, shortName, logoFile }) {
-  const patch = { name, short_name: shortName }
+async function update(teamId, { name, shortName, logoFile, primaryColor, secondaryColor }) {
+  const patch = {
+    name,
+    short_name: shortName,
+    primary_color: primaryColor,
+    secondary_color: secondaryColor,
+  }
   if (logoFile) {
     patch.logo = await uploadLogo(teamId, logoFile)
   }

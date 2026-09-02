@@ -249,6 +249,8 @@ export default {
     teamNamePlaceholder: 'z. B. Ivan FC',
     teamShortCodeLabel: 'Kürzel',
     teamShortCodePlaceholder: 'z. B. IFC',
+    teamPrimaryColorLabel: 'Primärfarbe',
+    teamSecondaryColorLabel: 'Sekundärfarbe',
     teamCreateFailed: 'Team konnte nicht erstellt werden.',
     teamUpdateFailed: 'Team konnte nicht aktualisiert werden.',
     teamDeleteFailed: 'Team konnte nicht gelöscht werden.',

@@ -25,6 +25,23 @@ export function cx(...parts) {
   return parts.filter(Boolean).join(' ')
 }
 
+/** Picks navy or white text for readability against one or more background
+ * colors (relative-luminance approximation, averaged across all of them) —
+ * used by TeamBadge's generated crest fallback, where a custom team's
+ * primary/secondary colors are chosen freely by the admin and could be
+ * anything, including light ones a fixed white fill would disappear on. */
+export function getReadableTextColor(...hexColors) {
+  const luminances = hexColors.map((hex) => {
+    const clean = (hex || '').replace('#', '')
+    const r = parseInt(clean.slice(0, 2), 16) || 0
+    const g = parseInt(clean.slice(2, 4), 16) || 0
+    const b = parseInt(clean.slice(4, 6), 16) || 0
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+  })
+  const avgLuminance = luminances.reduce((sum, l) => sum + l, 0) / luminances.length
+  return avgLuminance > 150 ? '#0B1E3D' : '#FFFFFF'
+}
+
 /** Currency is deliberately independent of language (always EUR) — only
  * the number formatting (decimal separator, grouping) follows the UI
  * language. */

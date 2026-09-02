@@ -249,6 +249,8 @@ export default {
     teamNamePlaceholder: 'npr. Ivan FC',
     teamShortCodeLabel: 'Skraćenica',
     teamShortCodePlaceholder: 'npr. IFC',
+    teamPrimaryColorLabel: 'Primarna boja',
+    teamSecondaryColorLabel: 'Sekundarna boja',
     teamCreateFailed: 'Tim nije moguće kreirati.',
     teamUpdateFailed: 'Tim nije moguće izmeniti.',
     teamDeleteFailed: 'Tim nije moguće obrisati.',

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAppData } from '../context/AppDataContext.jsx'
+import { getReadableTextColor } from '../utils/formatters'
 
 /** Renders a team's real crest when `logo` is set and loads successfully.
  * Otherwise (or if the image 404s) falls back to a generated shield-shaped
@@ -23,6 +24,16 @@ export default function TeamBadge({ teamId, size = 'md' }) {
   }
 
   const gradientId = `crest-${team.id}-${size}`
+  // The crest is a diagonal blend of both colors, so contrast has to work
+  // against the pair of them together, not just one — matters most for
+  // custom teams, whose primary/secondary can be any admin-picked color
+  // (predefined teams' colors were already chosen to work with white text).
+  const textFill = getReadableTextColor(team.primary, team.secondary)
+  // A single flat fill can't guarantee contrast against BOTH ends of a
+  // gradient at once (e.g. a black/white pair) — an outline in the
+  // opposite tone catches whichever half the fill alone would struggle
+  // against, same idea real club badges use.
+  const textStroke = textFill === '#FFFFFF' ? 'rgba(11, 30, 61, 0.55)' : 'rgba(255, 255, 255, 0.65)'
 
   return (
     <div className={`team-badge size-${size}`} title={team.name}>
@@ -44,6 +55,8 @@ export default function TeamBadge({ teamId, size = 'md' }) {
           y="27"
           textAnchor="middle"
           className="team-crest-text"
+          fill={textFill}
+          stroke={textStroke}
         >
           {team.shortName}
         </text>

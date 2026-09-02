@@ -15,6 +15,11 @@ export default function AdminTeamForm({ team, onSaved, onCancel }) {
 
   const [name, setName] = useState(team?.name ?? '')
   const [shortCode, setShortCode] = useState(team?.shortName ?? '')
+  // Same defaults the teams table itself already falls back to for a brand
+  // new row (see migration 0001) — kept in sync rather than picking an
+  // arbitrary different default here.
+  const [primaryColor, setPrimaryColor] = useState(team?.primary ?? '#0B1E3D')
+  const [secondaryColor, setSecondaryColor] = useState(team?.secondary ?? '#1D4FD7')
   const [logoFile, setLogoFile] = useState(null)
   const [preview, setPreview] = useState(team?.logo ?? null)
   const [error, setError] = useState('')
@@ -42,10 +47,10 @@ export default function AdminTeamForm({ team, onSaved, onCancel }) {
     setSubmitting(true)
     try {
       if (isEditing) {
-        await updateTeam(team.id, { name: trimmedName, shortName: trimmedCode, logoFile })
+        await updateTeam(team.id, { name: trimmedName, shortName: trimmedCode, logoFile, primaryColor, secondaryColor })
         onSaved(team.id)
       } else {
-        const id = await createTeam({ name: trimmedName, shortName: trimmedCode, logoFile })
+        const id = await createTeam({ name: trimmedName, shortName: trimmedCode, logoFile, primaryColor, secondaryColor })
         onSaved(id)
       }
     } catch (err) {
@@ -95,6 +100,23 @@ export default function AdminTeamForm({ team, onSaved, onCancel }) {
           onChange={(e) => setShortCode(e.target.value.toUpperCase().slice(0, 4))}
           placeholder={t('admin.teamShortCodePlaceholder')}
         />
+      </div>
+
+      <div className="admin-form-grid">
+        <div className="field">
+          <label>{t('admin.teamPrimaryColorLabel')}</label>
+          <div className="color-field-row">
+            <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} />
+            <span className="color-field-hex">{primaryColor}</span>
+          </div>
+        </div>
+        <div className="field">
+          <label>{t('admin.teamSecondaryColorLabel')}</label>
+          <div className="color-field-row">
+            <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} />
+            <span className="color-field-hex">{secondaryColor}</span>
+          </div>
+        </div>
       </div>
 
       <div className="modal-actions">

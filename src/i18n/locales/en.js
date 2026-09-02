@@ -252,6 +252,8 @@ export default {
     teamNamePlaceholder: 'e.g. Ivan FC',
     teamShortCodeLabel: 'Short code',
     teamShortCodePlaceholder: 'e.g. IFC',
+    teamPrimaryColorLabel: 'Primary color',
+    teamSecondaryColorLabel: 'Secondary color',
     teamCreateFailed: 'Could not create the team.',
     teamUpdateFailed: 'Could not update the team.',
     teamDeleteFailed: 'Could not delete the team.',

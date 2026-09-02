@@ -11,6 +11,10 @@
 -- teams currently has SELECT-only grants/RLS (writes were "seed/admin-SQL
 -- only" per its own migration 0001 comment) — this adds real INSERT/UPDATE/
 -- DELETE for admins, scoped so:
+--   - Column grants cover exactly what the custom-team form needs: name,
+--     short_name, logo, primary_color, secondary_color (already-existing
+--     columns since migration 0001, used by TeamBadge's generated-crest
+--     fallback for a team with no logo — nothing new added here).
 --   - INSERT must self-declare is_custom = true — the app can never create
 --     a "predefined" row.
 --   - UPDATE/DELETE both require is_custom = true on the EXISTING row, so
@@ -36,8 +40,8 @@
 alter table public.teams
   add column if not exists is_custom boolean not null default false;
 
-grant insert (id, name, short_name, logo, is_custom) on public.teams to authenticated;
-grant update (name, short_name, logo) on public.teams to authenticated;
+grant insert (id, name, short_name, logo, is_custom, primary_color, secondary_color) on public.teams to authenticated;
+grant update (name, short_name, logo, primary_color, secondary_color) on public.teams to authenticated;
 grant delete on public.teams to authenticated;
 
 drop policy if exists teams_admin_insert on public.teams;

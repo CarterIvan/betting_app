@@ -253,6 +253,8 @@ export default {
     teamNamePlaceholder: 'napr. Ivan FC',
     teamShortCodeLabel: 'Skratka',
     teamShortCodePlaceholder: 'napr. IFC',
+    teamPrimaryColorLabel: 'Primárna farba',
+    teamSecondaryColorLabel: 'Sekundárna farba',
     teamCreateFailed: 'Tím sa nepodarilo vytvoriť.',
     teamUpdateFailed: 'Tím sa nepodarilo upraviť.',
     teamDeleteFailed: 'Tím sa nepodarilo odstrániť.',
