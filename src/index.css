@@ -1165,6 +1165,41 @@ img { max-width: 100%; display: block; }
 .admin-result-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--gray-200); }
 .admin-result-input { width: 46px; height: 42px; text-align: center; font-weight: 800; font-size: 16px; border-radius: var(--radius-sm); border: 1.5px solid var(--gray-200); outline: none; }
 .admin-result-input:focus { border-color: var(--blue); }
+
+/* ==========================================================================
+   RESULT CORRECTION (locked result, request modal, vote popup)
+   ========================================================================== */
+.admin-result-locked { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--gray-200); display: flex; flex-direction: column; gap: 10px; }
+.admin-result-locked-score { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 17px; color: var(--navy); }
+.admin-result-locked-label { font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gray-400); }
+.admin-correction-pending-note { font-size: 12px; font-weight: 700; color: var(--gold-700); background: var(--gold-100); border-radius: var(--radius-sm); padding: 8px 10px; text-align: center; }
+
+.correction-current-result { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.correction-current-result-label { font-size: 12.5px; font-weight: 700; color: var(--text-soft); }
+.correction-current-result-value { font-size: 16px; font-weight: 800; color: var(--navy); }
+.correction-reason-input {
+  border: 1.5px solid var(--gray-200); border-radius: var(--radius-md); padding: 13px 14px; font-size: 14px;
+  background: var(--white); color: var(--text); outline: none; width: 100%; font-family: inherit; resize: vertical;
+}
+.correction-reason-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-100); }
+
+.correction-popup-card { position: relative; max-width: 340px; }
+.correction-popup-close {
+  position: absolute; top: 14px; right: 14px; background: none; border: none; color: var(--gray-400); cursor: pointer;
+  padding: 4px; line-height: 0;
+}
+.correction-score-change { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 14px; }
+.correction-score-row { font-size: 14px; font-weight: 700; color: var(--text-soft); }
+.correction-score-row.new { color: var(--navy); font-size: 16px; font-weight: 800; }
+.correction-score-arrow { color: var(--gold-600); font-size: 15px; }
+.correction-reason-box { background: var(--bg-soft); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; text-align: left; }
+.correction-reason-label { font-size: 11px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; color: var(--gray-500); }
+.correction-reason-text { font-size: 13.5px; color: var(--text); margin: 4px 0 0; line-height: 1.4; }
+.correction-progress { font-size: 12.5px; font-weight: 800; color: var(--navy); margin-bottom: 14px; }
+.correction-already-voted {
+  display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 700;
+  color: var(--green); background: var(--green-bg); border-radius: var(--radius-md); padding: 10px;
+}
 .admin-predictions-list { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--gray-200); display: flex; flex-direction: column; gap: 6px; }
 .admin-prediction-item { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-soft); font-weight: 600; }
 .admin-toggle-link { font-size: 12px; font-weight: 700; color: var(--blue); background: none; border: none; cursor: pointer; padding: 6px 0 0; display: flex; align-items: center; gap: 4px; }

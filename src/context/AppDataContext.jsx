@@ -10,6 +10,7 @@ import settingsService from '../services/settingsService'
 import logoService from '../services/logoService'
 import adminActionsService from '../services/adminActionsService'
 import dataService from '../services/dataService'
+import resultCorrectionService from '../services/resultCorrectionService'
 import { getTeamById as findTeam } from '../data/teams'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { getMatchStatus, MATCH_STATUS } from '../utils/matchState'
@@ -29,6 +30,8 @@ export function AppDataProvider({ children }) {
   const [matches, setMatches] = useState([])
   const [predictions, setPredictions] = useState([])
   const [predictionCompletion, setPredictionCompletion] = useState([])
+  const [correctionRequests, setCorrectionRequests] = useState([])
+  const [correctionVotes, setCorrectionVotes] = useState([])
   const [chatMessages, setChatMessages] = useState([])
   const [readState, setReadState] = useState({})
   const [settings, setSettings] = useState(null)
@@ -78,6 +81,8 @@ export function AppDataProvider({ children }) {
       setMatches([])
       setPredictions([])
       setPredictionCompletion([])
+      setCorrectionRequests([])
+      setCorrectionVotes([])
       setChatMessages([])
       setSettings(null)
       return
@@ -129,6 +134,25 @@ export function AppDataProvider({ children }) {
         if (!cancelled) setPredictionCompletion([])
       })
 
+    // Same reasoning as predictionCompletion above — its own isolated
+    // chain, not the critical Promise.all (see migration 0012). Before
+    // that migration exists in a given environment these tables/RPCs
+    // don't exist and this rejects; that must never block the rest of the
+    // app from loading, so it's caught right here and just leaves the
+    // correction popup/history unavailable rather than surfacing anywhere
+    // else.
+    Promise.all([resultCorrectionService.getAllRequests(), resultCorrectionService.getAllVotes()])
+      .then(([requests, votes]) => {
+        if (cancelled) return
+        setCorrectionRequests(requests)
+        setCorrectionVotes(votes)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setCorrectionRequests([])
+        setCorrectionVotes([])
+      })
+
     const unsubscribeChat = chatService.subscribe((message) => {
       setChatMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]))
     })
@@ -153,6 +177,22 @@ export function AppDataProvider({ children }) {
     []
   )
   const refetchMatches = useCallback(() => matchesService.getAll().then(setMatches), [])
+  // Never rejects — same reasoning as refetchPredictionCompletion above
+  // (see migration 0012): a missing table/RPC must never surface as a
+  // failure to any caller.
+  const refetchCorrections = useCallback(
+    () =>
+      Promise.all([resultCorrectionService.getAllRequests(), resultCorrectionService.getAllVotes()])
+        .then(([requests, votes]) => {
+          setCorrectionRequests(requests)
+          setCorrectionVotes(votes)
+        })
+        .catch(() => {
+          setCorrectionRequests([])
+          setCorrectionVotes([])
+        }),
+    []
+  )
   const refetchPredictions = useCallback(() => predictionsService.getAll().then(setPredictions), [])
   const refetchSettings = useCallback(() => settingsService.get().then(setSettings), [])
   const refetchLeagueLogo = useCallback(
@@ -275,6 +315,35 @@ export function AppDataProvider({ children }) {
     await matchesService.recalculateAllPoints()
     await Promise.all([refetchPredictions(), refetchPlayers()])
   }, [refetchPredictions, refetchPlayers])
+
+  /** Admin-only (RPC re-checks independently — see migration 0012's
+   * request_result_correction). The only way to change a FINISHED match's
+   * result — finish_match() itself now rejects being called again. Voting
+   * seats are snapshotted server-side; nothing else needs updating here
+   * besides the request/vote lists themselves. */
+  const requestResultCorrection = useCallback(
+    async (matchId, newHomeScore, newAwayScore, reason) => {
+      const id = await resultCorrectionService.request(matchId, newHomeScore, newAwayScore, reason)
+      await refetchCorrections()
+      return id
+    },
+    [refetchCorrections]
+  )
+
+  /** RPC re-checks the caller actually holds an unvoted seat (see
+   * migration 0012's vote_on_result_correction) and applies the new score
+   * + recalculates points atomically, server-side, if this vote makes it
+   * unanimous — so matches/predictions/players are refetched alongside
+   * the correction data itself; a rejection or a non-final approval only
+   * changes the vote/request rows, and refetching the rest is harmless
+   * either way. */
+  const voteOnResultCorrection = useCallback(
+    async (requestId, approve) => {
+      await resultCorrectionService.vote(requestId, approve)
+      await Promise.all([refetchCorrections(), refetchMatches(), refetchPredictions(), refetchPlayers()])
+    },
+    [refetchCorrections, refetchMatches, refetchPredictions, refetchPlayers]
+  )
 
   /** Admin-only (RLS + trigger — see migration 0004). Flips a player's paid
    * status; access is derived from this everywhere else in the app, so
@@ -422,6 +491,8 @@ export function AppDataProvider({ children }) {
     matches,
     predictions,
     predictionCompletion,
+    correctionRequests,
+    correctionVotes,
     chatMessages,
     settings,
     leagueLogoUrl,
@@ -439,6 +510,8 @@ export function AppDataProvider({ children }) {
     updateTeam,
     deleteTeam,
     finishMatch,
+    requestResultCorrection,
+    voteOnResultCorrection,
     recalculateAll,
     setPlayerPaymentStatus,
     updatePrizeSettings,

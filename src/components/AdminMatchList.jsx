@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { Pencil, Trash2, ChevronDown, ChevronUp, Check, X } from 'lucide-react'
+import { Pencil, Trash2, ChevronDown, ChevronUp, Check, X, Lock } from 'lucide-react'
 import TeamBadge from './TeamBadge.jsx'
 import TeamPicker from './TeamPicker.jsx'
+import AdminRequestCorrectionModal from './AdminRequestCorrectionModal.jsx'
 import { getMatchStatus, MATCH_STATUS } from '../utils/matchState'
 import { formatDate, cx } from '../utils/formatters'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 
 function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
-  const { players, predictions, teams, getTeamById } = useAppData()
+  const { players, predictions, teams, getTeamById, correctionRequests, correctionVotes } = useAppData()
   const { t, language } = useLanguage()
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -23,6 +24,12 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
   const [showTips, setShowTips] = useState(false)
   const [homeScore, setHomeScore] = useState(match.finalHomeScore ?? '')
   const [awayScore, setAwayScore] = useState(match.finalAwayScore ?? '')
+  const [requestingCorrection, setRequestingCorrection] = useState(false)
+
+  // At most one pending request per match (enforced server-side by a
+  // partial unique index — see migration 0012), so this is either the one
+  // pending request or none.
+  const pendingCorrection = correctionRequests.find((r) => r.matchId === match.id && r.status === 'pending')
 
   const status = getMatchStatus(match)
   const home = getTeamById(match.homeTeam)
@@ -130,31 +137,61 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
         </span>
       </div>
 
-      <div className="admin-result-row">
-        <input
-          className="admin-result-input"
-          inputMode="numeric"
-          value={homeScore}
-          onChange={(e) => setHomeScore(e.target.value.replace(/[^0-9]/g, '').slice(0, 2))}
-          placeholder="-"
-        />
-        <span className="score-sep">:</span>
-        <input
-          className="admin-result-input"
-          inputMode="numeric"
-          value={awayScore}
-          onChange={(e) => setAwayScore(e.target.value.replace(/[^0-9]/g, '').slice(0, 2))}
-          placeholder="-"
-        />
-        <button
-          className="btn btn-gold btn-sm"
-          style={{ flex: 1 }}
-          disabled={homeScore === '' || awayScore === ''}
-          onClick={handleFinish}
-        >
-          {match.finished ? t('admin.updateResult') : t('admin.closeMatch')}
-        </button>
-      </div>
+      {match.finished ? (
+        <div className="admin-result-locked">
+          <div className="admin-result-locked-score">
+            <Lock size={13} />
+            {match.finalHomeScore} : {match.finalAwayScore}
+            <span className="admin-result-locked-label">{t('admin.resultLockedLabel')}</span>
+          </div>
+          {pendingCorrection ? (
+            <div className="admin-correction-pending-note">
+              {t('admin.correctionPendingNote', {
+                approved: correctionVotes.filter((v) => v.requestId === pendingCorrection.id && v.vote === true).length,
+                total: correctionVotes.filter((v) => v.requestId === pendingCorrection.id).length,
+              })}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-outline btn-sm btn-block"
+              onClick={() => setRequestingCorrection(true)}
+            >
+              {t('admin.requestCorrectionButton')}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="admin-result-row">
+          <input
+            className="admin-result-input"
+            inputMode="numeric"
+            value={homeScore}
+            onChange={(e) => setHomeScore(e.target.value.replace(/[^0-9]/g, '').slice(0, 2))}
+            placeholder="-"
+          />
+          <span className="score-sep">:</span>
+          <input
+            className="admin-result-input"
+            inputMode="numeric"
+            value={awayScore}
+            onChange={(e) => setAwayScore(e.target.value.replace(/[^0-9]/g, '').slice(0, 2))}
+            placeholder="-"
+          />
+          <button
+            className="btn btn-gold btn-sm"
+            style={{ flex: 1 }}
+            disabled={homeScore === '' || awayScore === ''}
+            onClick={handleFinish}
+          >
+            {t('admin.closeMatch')}
+          </button>
+        </div>
+      )}
+
+      {requestingCorrection && (
+        <AdminRequestCorrectionModal match={match} onClose={() => setRequestingCorrection(false)} />
+      )}
 
       {status === MATCH_STATUS.UPCOMING ? (
         <div className="admin-predictions-locked">{t('admin.tipsLockedUntilKickoff')}</div>
@@ -188,9 +225,7 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
 /** Splits the already-sorted `matches` prop (see AdminPage's `sorted` —
  * non-finished first, finished last, each group by kickoff desc) into two
  * tabs purely by filtering, so each tab's relative order is exactly what
- * it already was in that combined list — no new sort logic here, and
- * nothing about how an individual match is edited/finished/deleted
- * changes; AdminMatchRow is reused completely unmodified for both tabs. */
+ * it already was in that combined list — no new sort logic here. */
 export default function AdminMatchList({ matches, onUpdate, onDelete, onFinish }) {
   const { t } = useLanguage()
   const [tab, setTab] = useState('active') // active | finished
