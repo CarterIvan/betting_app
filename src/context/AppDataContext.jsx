@@ -39,6 +39,7 @@ export function AppDataProvider({ children }) {
   const [readState, setReadState] = useState({})
   const [settings, setSettings] = useState(null)
   const [leagueLogoUrl, setLeagueLogoUrl] = useState(null)
+  const [paymentIban, setPaymentIban] = useState(null)
 
   // A logged-in-but-unpaid account: real, valid credentials, but no access
   // to anything else yet — Postgres enforces this independently via RLS
@@ -70,6 +71,22 @@ export function AppDataProvider({ children }) {
       .then(setLeagueLogoUrl)
       .catch(() => setLeagueLogoUrl(null))
   }, [])
+
+  // Authenticated but blocked (see migration 0018's get_payment_iban) — an
+  // unpaid player never reaches the critical fetch below (has_access()
+  // gates it), but still needs to read the admin-configured IBAN on the
+  // access-blocked screen. Its own isolated fetch, same reasoning as the
+  // league logo fetch above: optional, must never affect the main load.
+  useEffect(() => {
+    if (!accessBlocked) {
+      setPaymentIban(null)
+      return
+    }
+    settingsService
+      .getPaymentIban()
+      .then(setPaymentIban)
+      .catch(() => setPaymentIban(null))
+  }, [accessBlocked])
 
   // Once a user is known AND has access, load the rest of the app's data
   // and keep chat updating live. Tears everything down again on
@@ -430,6 +447,17 @@ export function AppDataProvider({ children }) {
     [refetchSettings]
   )
 
+  /** Admin-only (RLS — see migration 0018). Same one settings row as the
+   * prize distribution above — the unpaid access-blocked screen reflects
+   * the new IBAN on its next isolated fetch. */
+  const updatePaymentIban = useCallback(
+    async (iban) => {
+      await settingsService.setPaymentIban(iban)
+      await refetchSettings()
+    },
+    [refetchSettings]
+  )
+
   /** Admin-only (Storage RLS + settings RLS — see migration 0008). Uploads
    * the file, then saves the resulting URL onto the one settings row — the
    * next fetch anywhere in the app (login screen included) reflects it. */
@@ -561,6 +589,7 @@ export function AppDataProvider({ children }) {
     chatMessages,
     settings,
     leagueLogoUrl,
+    paymentIban,
     unreadChatCount,
     liveMatchCount,
     getTeamById,
@@ -582,6 +611,7 @@ export function AppDataProvider({ children }) {
     recalculateAll,
     setPlayerPaymentStatus,
     updatePrizeSettings,
+    updatePaymentIban,
     updateLeagueLogo,
     removeLeagueLogo,
     editPlayerBalance,

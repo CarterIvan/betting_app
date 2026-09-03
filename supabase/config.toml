@@ -1,0 +1,14 @@
+# Minimal Supabase CLI project configuration.
+#
+# Not needed for the customer-installation path (supabase/install.sql +
+# supabase/install/edge-functions/ via the Dashboard) — that path never
+# touches the CLI. This file exists only for anyone doing future
+# development or upgrades with the Supabase CLI (`supabase link`,
+# `supabase db push`, `supabase functions deploy`), so the project has the
+# standard structure the CLI expects.
+#
+# Full reference: https://supabase.com/docs/guides/local-development/cli/config
+project_id = "pickmates"
+
+[db.migrations]
+schema_paths = []

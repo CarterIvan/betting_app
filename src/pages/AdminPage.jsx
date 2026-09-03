@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   ArrowLeft, ShieldCheck, Crown, Plus, ListChecks, Users, Settings, Landmark,
-  ChevronRight, CheckCircle2, Calculator, Shield,
+  ChevronRight, CheckCircle2, Calculator, Shield, CreditCard,
 } from 'lucide-react'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
@@ -15,6 +15,7 @@ import AdminDangerZone from '../components/AdminDangerZone.jsx'
 import AdminLeagueLogo from '../components/AdminLeagueLogo.jsx'
 import AdminTeamsList from '../components/AdminTeamsList.jsx'
 import AdminAnnouncementForm from '../components/AdminAnnouncementForm.jsx'
+import AdminPaymentForm from '../components/AdminPaymentForm.jsx'
 
 const MENU = [
   { key: 'add', titleKey: 'admin.menuAddMatch', subKey: 'admin.menuAddMatchSub', icon: Plus },
@@ -22,6 +23,7 @@ const MENU = [
   { key: 'teams', titleKey: 'admin.menuTeams', subKey: 'admin.menuTeamsSub', icon: Shield },
   { key: 'players', titleKey: 'admin.menuPlayers', subKey: 'admin.menuPlayersSub', icon: Users },
   { key: 'prizes', titleKey: 'admin.menuPrizes', subKey: 'admin.menuPrizesSub', icon: Landmark },
+  { key: 'payment', titleKey: 'admin.menuPayment', subKey: 'admin.menuPaymentSub', icon: CreditCard },
   { key: 'settings', titleKey: 'admin.menuSettings', subKey: 'admin.menuSettingsSub', icon: Settings },
 ]
 
@@ -144,6 +146,8 @@ export default function AdminPage({ onNavigate }) {
       )}
 
       {view === 'prizes' && <AdminPrizeForm />}
+
+      {view === 'payment' && <AdminPaymentForm />}
 
       {view === 'settings' && (
         <>

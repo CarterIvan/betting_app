@@ -6,6 +6,7 @@ function mapSettings(row) {
     secondPlacePrize: Number(row.second_place_prize),
     thirdPlacePrize: Number(row.third_place_prize),
     logoUrl: row.logo_url,
+    paymentIban: row.payment_iban,
   }
 }
 
@@ -14,7 +15,7 @@ function mapSettings(row) {
 async function get() {
   const { data, error } = await supabase
     .from('settings')
-    .select('first_place_prize, second_place_prize, third_place_prize, logo_url')
+    .select('first_place_prize, second_place_prize, third_place_prize, logo_url, payment_iban')
     .eq('id', true)
     .single()
   if (error) throw error
@@ -54,6 +55,26 @@ async function update({ firstPlacePrize, secondPlacePrize, thirdPlacePrize }) {
   if (error) throw error
 }
 
-const settingsService = { get, update, getLogoUrl, setLogoUrl }
+/** Authenticated — works even for an unpaid, access-blocked player (see
+ * migration 0018's get_payment_iban). Deliberately bypasses settings' own
+ * has_access() RLS, same reasoning as getLogoUrl above, so the access-
+ * blocked screen can show the admin-configured IBAN; returns only the
+ * IBAN, nothing else on the row. */
+async function getPaymentIban() {
+  const { data, error } = await supabase.rpc('get_payment_iban')
+  if (error) throw error
+  return data
+}
+
+/** Admin-only (RLS — see migration 0018). */
+async function setPaymentIban(paymentIban) {
+  const { error } = await supabase
+    .from('settings')
+    .update({ payment_iban: paymentIban, updated_at: new Date().toISOString() })
+    .eq('id', true)
+  if (error) throw error
+}
+
+const settingsService = { get, update, getLogoUrl, setLogoUrl, getPaymentIban, setPaymentIban }
 
 export default settingsService
