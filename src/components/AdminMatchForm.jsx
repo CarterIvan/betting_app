@@ -4,7 +4,7 @@ import TeamPicker from './TeamPicker.jsx'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 
-const emptyForm = { homeTeam: '', awayTeam: '', date: '', startTime: '' }
+const emptyForm = { homeTeam: '', awayTeam: '', date: '', startTime: '', roundName: '' }
 
 export default function AdminMatchForm({ onAdd }) {
   const { teams } = useAppData()
@@ -60,6 +60,15 @@ export default function AdminMatchForm({ onAdd }) {
         <div className="field">
           <label>{t('admin.time')}</label>
           <input type="time" value={form.startTime} onChange={update('startTime')} />
+        </div>
+        <div className="field">
+          <label>{t('admin.roundLabel')}</label>
+          <input
+            type="text"
+            value={form.roundName}
+            onChange={update('roundName')}
+            placeholder={t('admin.roundPlaceholder')}
+          />
         </div>
       </div>
       <button className="btn btn-gold btn-block" type="submit" disabled={submitting}>

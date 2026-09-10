@@ -8,7 +8,7 @@ import { formatDate, cx } from '../utils/formatters'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 
-function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
+function AdminMatchRow({ match, onUpdate, onUpdateLiveScore, onDelete, onFinish }) {
   const { players, predictions, teams, getTeamById, correctionRequests, correctionVotes } = useAppData()
   const { t, language } = useLanguage()
   const [editing, setEditing] = useState(false)
@@ -17,6 +17,7 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
     awayTeam: match.awayTeam,
     date: match.date,
     startTime: match.startTime,
+    roundName: match.roundName ?? '',
   })
   const [editError, setEditError] = useState('')
   const [editSaving, setEditSaving] = useState(false)
@@ -25,6 +26,26 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
   const [homeScore, setHomeScore] = useState(match.finalHomeScore ?? '')
   const [awayScore, setAwayScore] = useState(match.finalAwayScore ?? '')
   const [requestingCorrection, setRequestingCorrection] = useState(false)
+  const [liveHomeScore, setLiveHomeScore] = useState(match.liveHomeScore ?? '')
+  const [liveAwayScore, setLiveAwayScore] = useState(match.liveAwayScore ?? '')
+  const [liveScoreSaving, setLiveScoreSaving] = useState(false)
+  const [liveScoreError, setLiveScoreError] = useState('')
+  const [liveScoreSaved, setLiveScoreSaved] = useState(false)
+
+  const handleSaveLiveScore = async () => {
+    setLiveScoreSaving(true)
+    setLiveScoreError('')
+    setLiveScoreSaved(false)
+    try {
+      await onUpdateLiveScore(match.id, { liveHomeScore, liveAwayScore })
+      setLiveScoreSaved(true)
+      setTimeout(() => setLiveScoreSaved(false), 2200)
+    } catch {
+      setLiveScoreError(t('admin.liveScoreSaveFailed'))
+    } finally {
+      setLiveScoreSaving(false)
+    }
+  }
 
   // At most one pending request per match (enforced server-side by a
   // partial unique index — see migration 0012), so this is either the one
@@ -98,6 +119,15 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
             <label>{t('admin.time')}</label>
             <input type="time" value={editForm.startTime} onChange={(e) => setEditForm((f) => ({ ...f, startTime: e.target.value }))} />
           </div>
+          <div className="field">
+            <label>{t('admin.roundLabel')}</label>
+            <input
+              type="text"
+              value={editForm.roundName}
+              onChange={(e) => setEditForm((f) => ({ ...f, roundName: e.target.value }))}
+              placeholder={t('admin.roundPlaceholder')}
+            />
+          </div>
         </div>
         <div className="flex-row" style={{ gap: 8 }}>
           <button className="btn btn-primary btn-sm" onClick={handleSaveEdit} disabled={editSaving}>
@@ -162,7 +192,42 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
           )}
         </div>
       ) : (
-        <div className="admin-result-row">
+        <>
+          <div className="admin-live-score-section">
+            <div className="admin-live-score-label">{t('admin.liveScoreLabel')}</div>
+            {liveScoreError && <div className="login-error">{liveScoreError}</div>}
+            <div className="admin-result-row">
+              <input
+                className="admin-result-input"
+                inputMode="numeric"
+                value={liveHomeScore}
+                onChange={(e) => setLiveHomeScore(e.target.value.replace(/[^0-9]/g, '').slice(0, 2))}
+                placeholder="-"
+              />
+              <span className="score-sep">:</span>
+              <input
+                className="admin-result-input"
+                inputMode="numeric"
+                value={liveAwayScore}
+                onChange={(e) => setLiveAwayScore(e.target.value.replace(/[^0-9]/g, '').slice(0, 2))}
+                placeholder="-"
+              />
+              <button
+                className="btn btn-outline btn-sm"
+                style={{ flex: 1 }}
+                onClick={handleSaveLiveScore}
+                disabled={liveScoreSaving}
+              >
+                {liveScoreSaving ? t('common.saving') : t('common.save')}
+              </button>
+            </div>
+            {liveScoreSaved && (
+              <div className="saved-note" style={{ marginTop: 6 }}>
+                <Check size={13} /> {t('admin.liveScoreSaved')}
+              </div>
+            )}
+          </div>
+          <div className="admin-result-row">
           <input
             className="admin-result-input"
             inputMode="numeric"
@@ -186,7 +251,8 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
           >
             {t('admin.closeMatch')}
           </button>
-        </div>
+          </div>
+        </>
       )}
 
       {requestingCorrection && (
@@ -226,7 +292,7 @@ function AdminMatchRow({ match, onUpdate, onDelete, onFinish }) {
  * non-finished first, finished last, each group by kickoff desc) into two
  * tabs purely by filtering, so each tab's relative order is exactly what
  * it already was in that combined list — no new sort logic here. */
-export default function AdminMatchList({ matches, onUpdate, onDelete, onFinish }) {
+export default function AdminMatchList({ matches, onUpdate, onUpdateLiveScore, onDelete, onFinish }) {
   const { t } = useLanguage()
   const [tab, setTab] = useState('active') // active | finished
 
@@ -261,7 +327,14 @@ export default function AdminMatchList({ matches, onUpdate, onDelete, onFinish }
         </div>
       ) : (
         visible.map((match) => (
-          <AdminMatchRow key={match.id} match={match} onUpdate={onUpdate} onDelete={onDelete} onFinish={onFinish} />
+          <AdminMatchRow
+            key={match.id}
+            match={match}
+            onUpdate={onUpdate}
+            onUpdateLiveScore={onUpdateLiveScore}
+            onDelete={onDelete}
+            onFinish={onFinish}
+          />
         ))
       )}
     </>

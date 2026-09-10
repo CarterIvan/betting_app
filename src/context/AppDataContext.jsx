@@ -314,6 +314,17 @@ export function AppDataProvider({ children }) {
     [refetchMatches]
   )
 
+  /** Admin-only (RLS — see migration 0020). Sets ONLY the informational
+   * live score shown on the Live page — never scoring, never the real
+   * result, never finishes the match. See matchesService.updateLiveScore. */
+  const updateMatchLiveScore = useCallback(
+    async (matchId, liveScore) => {
+      await matchesService.updateLiveScore(matchId, liveScore)
+      await refetchMatches()
+    },
+    [refetchMatches]
+  )
+
   const deleteMatch = useCallback(
     async (matchId) => {
       await matchesService.remove(matchId)
@@ -599,6 +610,7 @@ export function AppDataProvider({ children }) {
     savePrediction,
     addMatch,
     updateMatch,
+    updateMatchLiveScore,
     deleteMatch,
     createTeam,
     updateTeam,

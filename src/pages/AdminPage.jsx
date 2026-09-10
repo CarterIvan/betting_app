@@ -28,7 +28,8 @@ const MENU = [
 ]
 
 export default function AdminPage({ onNavigate }) {
-  const { currentUser, matches, addMatch, updateMatch, deleteMatch, finishMatch, recalculateAll } = useAppData()
+  const { currentUser, matches, addMatch, updateMatch, updateMatchLiveScore, deleteMatch, finishMatch, recalculateAll } =
+    useAppData()
   const { t } = useLanguage()
   const [view, setView] = useState('menu')
   const [toast, setToast] = useState('')
@@ -133,7 +134,13 @@ export default function AdminPage({ onNavigate }) {
       {view === 'add' && <AdminMatchForm onAdd={handleAdd} />}
 
       {view === 'matches' && (
-        <AdminMatchList matches={sorted} onUpdate={updateMatch} onDelete={deleteMatch} onFinish={handleFinish} />
+        <AdminMatchList
+          matches={sorted}
+          onUpdate={updateMatch}
+          onUpdateLiveScore={updateMatchLiveScore}
+          onDelete={deleteMatch}
+          onFinish={handleFinish}
+        />
       )}
 
       {view === 'teams' && <AdminTeamsList />}
