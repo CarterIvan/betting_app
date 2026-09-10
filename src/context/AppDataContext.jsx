@@ -5,6 +5,7 @@ import teamsService from '../services/teamsService'
 import matchesService from '../services/matchesService'
 import predictionsService from '../services/predictionsService'
 import chatService from '../services/chatService'
+import chatReadReceiptsService from '../services/chatReadReceiptsService'
 import profileService from '../services/profileService'
 import settingsService from '../services/settingsService'
 import logoService from '../services/logoService'
@@ -36,6 +37,11 @@ export function AppDataProvider({ children }) {
   const [latestAnnouncement, setLatestAnnouncement] = useState(null)
   const [myAnnouncementReadIds, setMyAnnouncementReadIds] = useState([])
   const [chatMessages, setChatMessages] = useState([])
+  // Real, shared, server-side "who has read the chat" state (migration
+  // 0021) — one row per player who has ever opened it. Not the same thing
+  // as `readState` below, which is this device's own local unread-badge
+  // tracker only.
+  const [chatReadReceipts, setChatReadReceipts] = useState([])
   const [readState, setReadState] = useState({})
   const [settings, setSettings] = useState(null)
   const [leagueLogoUrl, setLeagueLogoUrl] = useState(null)
@@ -106,6 +112,7 @@ export function AppDataProvider({ children }) {
       setLatestAnnouncement(null)
       setMyAnnouncementReadIds([])
       setChatMessages([])
+      setChatReadReceipts([])
       setSettings(null)
       return
     }
@@ -193,13 +200,42 @@ export function AppDataProvider({ children }) {
         setMyAnnouncementReadIds([])
       })
 
+    // Same reasoning again — its own isolated chain, not the critical
+    // Promise.all (see migration 0021). Before that migration exists in a
+    // given environment this table doesn't exist and this rejects; that
+    // must never block the rest of the app from loading, so it's caught
+    // right here and just leaves "seen by" avatars unavailable rather than
+    // surfacing anywhere else.
+    chatReadReceiptsService
+      .getAll()
+      .then((receipts) => {
+        if (!cancelled) setChatReadReceipts(receipts)
+      })
+      .catch(() => {
+        if (!cancelled) setChatReadReceipts([])
+      })
+
     const unsubscribeChat = chatService.subscribe((message) => {
       setChatMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]))
+    })
+
+    // Any player's read state changing (their first read = insert, every
+    // read after = update) arrives here, so "seen by" avatars update live
+    // for everyone currently viewing the chat, not just on next refetch.
+    const unsubscribeReadReceipts = chatReadReceiptsService.subscribe((receipt) => {
+      setChatReadReceipts((prev) => {
+        const idx = prev.findIndex((r) => r.playerId === receipt.playerId)
+        if (idx === -1) return [...prev, receipt]
+        const next = [...prev]
+        next[idx] = receipt
+        return next
+      })
     })
 
     return () => {
       cancelled = true
       unsubscribeChat()
+      unsubscribeReadReceipts()
     }
   }, [currentUser, accessBlocked])
 
@@ -564,6 +600,26 @@ export function AppDataProvider({ children }) {
     })
   }, [currentUser, chatMessages])
 
+  /** The REAL, shared read-receipt write (migration 0021) — separate from
+   * markChatRead above, which only ever updates the local unread-badge
+   * state. RLS only allows a player to write their own row, so this can
+   * never mark anyone else's chat as read. Skips the write entirely if
+   * this player's own already-known receipt is already at or past the
+   * latest message — avoids a redundant round trip on every render/tab,
+   * not a hard guarantee against duplicate writes (the upsert is
+   * idempotent either way, so an occasional duplicate is harmless). */
+  const markChatSeen = useCallback(() => {
+    if (!currentUser || chatMessages.length === 0) return
+    const latest = chatMessages[chatMessages.length - 1]
+    const existing = chatReadReceipts.find((r) => r.playerId === currentUser.id)
+    if (existing && new Date(existing.lastReadAt).getTime() >= new Date(latest.createdAt).getTime()) return
+    chatReadReceiptsService.markRead(currentUser.id, latest.createdAt).catch(() => {
+      // Best-effort: a failed write here just means "seen by" lags behind
+      // for this player until their next successful mark — it must never
+      // surface as a visible error for what's a cosmetic indicator.
+    })
+  }, [currentUser, chatMessages, chatReadReceipts])
+
   const getTeamById = useCallback((id) => findTeam(teams, id), [teams])
 
   // Reuses the same `matches` state (and the same status derivation) the
@@ -598,6 +654,7 @@ export function AppDataProvider({ children }) {
     latestAnnouncement,
     myAnnouncementReadIds,
     chatMessages,
+    chatReadReceipts,
     settings,
     leagueLogoUrl,
     paymentIban,
@@ -633,6 +690,7 @@ export function AppDataProvider({ children }) {
     resetLeague,
     sendChatMessage,
     markChatRead,
+    markChatSeen,
   }
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>

@@ -3,11 +3,13 @@ import { Send, Users } from 'lucide-react'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 import ChatMessage from '../components/ChatMessage.jsx'
+import { getSeenByPlayers } from '../utils/chatSeenBy'
 
 const QUICK_EMOJI = ['⚽', '🔥', '😂', '🖕', '😢']
 
 export default function ChatPage() {
-  const { currentUser, players, chatMessages, sendChatMessage, markChatRead } = useAppData()
+  const { currentUser, players, chatMessages, chatReadReceipts, sendChatMessage, markChatRead, markChatSeen } =
+    useAppData()
   const { t, pluralPlayers } = useLanguage()
   const [text, setText] = useState('')
   const endRef = useRef(null)
@@ -16,7 +18,8 @@ export default function ChatPage() {
 
   useEffect(() => {
     markChatRead()
-  }, [chatMessages.length, markChatRead])
+    markChatSeen()
+  }, [chatMessages.length, markChatRead, markChatSeen])
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -39,7 +42,12 @@ export default function ChatPage() {
         </div>
         <div className="chat-messages">
           {chatMessages.map((message) => (
-            <ChatMessage key={message.id} message={message} mine={message.playerId === currentUser.id} />
+            <ChatMessage
+              key={message.id}
+              message={message}
+              mine={message.playerId === currentUser.id}
+              seenBy={getSeenByPlayers(message, chatReadReceipts, players)}
+            />
           ))}
           <div ref={endRef} />
         </div>

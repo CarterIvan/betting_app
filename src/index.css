@@ -1028,6 +1028,14 @@ img { max-width: 100%; display: block; }
   border-radius: 16px 16px 4px 16px;
 }
 .chat-message-time { font-size: 10px; color: var(--gray-400); font-weight: 600; padding: 0 6px; }
+.chat-seen-by { display: flex; padding: 0 6px; }
+.chat-seen-avatar {
+  width: 14px; height: 14px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+  border: 1.5px solid var(--bg); background: var(--navy); color: var(--white);
+  font-size: 7px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  margin-left: -5px;
+}
+.chat-seen-avatar:first-child { margin-left: 0; }
 
 .chat-quick-emoji { display: flex; gap: 8px; padding: 0 2px 8px; }
 .chat-quick-emoji button {
