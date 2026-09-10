@@ -4,7 +4,7 @@ import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 import ChatMessage from '../components/ChatMessage.jsx'
 
-const QUICK_EMOJI = ['⚽', '🔥', '😂', '🙌', '😢']
+const QUICK_EMOJI = ['⚽', '🔥', '😂', '🖕', '😢']
 
 export default function ChatPage() {
   const { currentUser, players, chatMessages, sendChatMessage, markChatRead } = useAppData()
