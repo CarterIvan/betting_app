@@ -13,6 +13,7 @@ import adminActionsService from '../services/adminActionsService'
 import dataService from '../services/dataService'
 import resultCorrectionService from '../services/resultCorrectionService'
 import announcementService from '../services/announcementService'
+import slotService from '../services/slotService'
 import { getTeamById as findTeam } from '../data/teams'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { getMatchStatus, MATCH_STATUS } from '../utils/matchState'
@@ -42,6 +43,11 @@ export function AppDataProvider({ children }) {
   // as `readState` below, which is this device's own local unread-badge
   // tracker only.
   const [chatReadReceipts, setChatReadReceipts] = useState([])
+  // Every player's collected Slot clubs (migration 0024) — the "Zberatelia"
+  // list and the current player's own album are both just filtered views
+  // of this same shared array. Entirely independent of predictions/
+  // scoring/matches — a club here never affects points or rankings.
+  const [slotCollections, setSlotCollections] = useState([])
   const [readState, setReadState] = useState({})
   const [settings, setSettings] = useState(null)
   const [leagueLogoUrl, setLeagueLogoUrl] = useState(null)
@@ -113,6 +119,7 @@ export function AppDataProvider({ children }) {
       setMyAnnouncementReadIds([])
       setChatMessages([])
       setChatReadReceipts([])
+      setSlotCollections([])
       setSettings(null)
       return
     }
@@ -215,6 +222,21 @@ export function AppDataProvider({ children }) {
         if (!cancelled) setChatReadReceipts([])
       })
 
+    // Same reasoning again — its own isolated chain, not the critical
+    // Promise.all (see migration 0024). Before that migration exists in a
+    // given environment these tables don't exist and this rejects; that
+    // must never block the rest of the app from loading, so it's caught
+    // right here and just leaves the Slot album/Zberatelia list empty
+    // rather than surfacing anywhere else.
+    slotService
+      .getAllCollections()
+      .then((collections) => {
+        if (!cancelled) setSlotCollections(collections)
+      })
+      .catch(() => {
+        if (!cancelled) setSlotCollections([])
+      })
+
     const unsubscribeChat = chatService.subscribe((message) => {
       setChatMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]))
     })
@@ -252,12 +274,26 @@ export function AppDataProvider({ children }) {
       setSettings(updated)
     })
 
+    // Any player's newly-drawn club arrives here, so the "Zberatelia"
+    // list updates live for everyone watching — deduped on the same
+    // (player, team) pair spinSlot() itself dedupes its own optimistic
+    // update on, so a player's own spin is never double-counted once its
+    // realtime echo arrives a moment later. See migration 0024.
+    const unsubscribeSlot = slotService.subscribe((collection) => {
+      setSlotCollections((prev) =>
+        prev.some((c) => c.playerId === collection.playerId && c.teamId === collection.teamId)
+          ? prev
+          : [...prev, collection]
+      )
+    })
+
     return () => {
       cancelled = true
       unsubscribeChat()
       unsubscribeReadReceipts()
       unsubscribeMatches()
       unsubscribeSettings()
+      unsubscribeSlot()
     }
   }, [currentUser, accessBlocked])
 
@@ -655,6 +691,38 @@ export function AppDataProvider({ children }) {
     })
   }, [currentUser, chatMessages, chatReadReceipts])
 
+  /** The ONLY way a Slot spin happens — entirely server-side via
+   * spin_slot() (migration 0024): fair random club, daily-limit check, and
+   * duplicate detection all enforced in Postgres, not here. This just
+   * calls it and, if the drawn club is new, appends it to the shared
+   * `slotCollections` array optimistically (so the current player's own
+   * album/progress updates instantly) — deduped against the realtime
+   * subscription above by the exact same (player, team) pair, so the
+   * echo of this same insert arriving moments later is a no-op, never a
+   * duplicate entry. `justCompleted` is computed from `slotCollections` as
+   * read from this callback's own closure (a dependency below, so always
+   * current as of the last render) BEFORE the state update is queued —
+   * deliberately not computed inside the setState updater, since that
+   * callback's execution timing isn't something to depend on here. */
+  const spinSlot = useCallback(async () => {
+    const result = await slotService.spin()
+    // `isEmpty`/`isNew`/`collectedCount`/`totalTeams`/`justCompleted` are
+    // all decided server-side by spin_slot() (migration 0024) — this only
+    // mirrors a NEW club into the shared `slotCollections` array so the
+    // current player's own album/progress updates instantly, deduped
+    // against the realtime subscription's echo of the same insert by the
+    // same (player, team) pair. Nothing here recomputes or second-guesses
+    // any of the server's own outcome fields.
+    if (result.isNew) {
+      setSlotCollections((prev) =>
+        prev.some((c) => c.playerId === currentUser.id && c.teamId === result.teamId)
+          ? prev
+          : [...prev, { playerId: currentUser.id, teamId: result.teamId, collectedAt: new Date().toISOString() }]
+      )
+    }
+    return result
+  }, [currentUser])
+
   const getTeamById = useCallback((id) => findTeam(teams, id), [teams])
 
   // Reuses the same `matches` state (and the same status derivation) the
@@ -690,6 +758,7 @@ export function AppDataProvider({ children }) {
     myAnnouncementReadIds,
     chatMessages,
     chatReadReceipts,
+    slotCollections,
     settings,
     leagueLogoUrl,
     paymentIban,
@@ -717,6 +786,7 @@ export function AppDataProvider({ children }) {
     updatePrizeSettings,
     updatePaymentIban,
     updateTickerMessage,
+    spinSlot,
     updateLeagueLogo,
     removeLeagueLogo,
     editPlayerBalance,

@@ -9,6 +9,7 @@ import ChatPage from './pages/ChatPage.jsx'
 import LivePage from './pages/LivePage.jsx'
 import HistoryPage from './pages/HistoryPage.jsx'
 import BankaPage from './pages/BankaPage.jsx'
+import SlotPage from './pages/SlotPage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
 import AccessBlockedPage from './pages/AccessBlockedPage.jsx'
 
@@ -64,6 +65,7 @@ export default function App() {
     live: <LivePage />,
     history: <HistoryPage />,
     banka: <BankaPage />,
+    slot: <SlotPage />,
     admin: <AdminPage onNavigate={setCurrentPage} />,
   }
 

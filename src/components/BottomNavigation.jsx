@@ -1,4 +1,4 @@
-import { Home, Trophy, MessageCircle, Radio, History, Landmark, ShieldCheck } from 'lucide-react'
+import { Home, Trophy, MessageCircle, Radio, History, Landmark, Sparkles, ShieldCheck } from 'lucide-react'
 import { useAppData } from '../context/AppDataContext.jsx'
 import { useLanguage } from '../i18n/LanguageContext.jsx'
 import { cx } from '../utils/formatters'
@@ -10,6 +10,7 @@ const ITEMS = [
   { key: 'live', labelKey: 'nav.live', icon: Radio },
   { key: 'history', labelKey: 'nav.history', icon: History },
   { key: 'banka', labelKey: 'nav.banka', icon: Landmark },
+  { key: 'slot', labelKey: 'nav.slot', icon: Sparkles },
 ]
 
 // Which nav items can carry a count badge, and where that count comes from.

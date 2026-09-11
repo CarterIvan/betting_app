@@ -1742,3 +1742,343 @@ img { max-width: 100%; display: block; }
 @media (min-width: 640px) {
   .bottom-nav-inner, .chat-input-inner { border-radius: 0; }
 }
+
+/* ==========================================================================
+   SLOT — club-collecting mini-game (fully isolated from scoring/ranking)
+   ========================================================================== */
+.slot-header { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; margin-bottom: 22px; }
+/* Premium badge: deep navy disc, thin gold ring, faint outer glow —
+   the inverse of the old solid-gold circle, closer to a UEFA-style medal. */
+.slot-header-icon {
+  width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 32% 26%, var(--navy-600) 0%, var(--navy) 62%, #060f22 100%);
+  color: var(--gold);
+  border: 1.5px solid rgba(244, 180, 0, 0.55);
+  box-shadow:
+    0 0 0 4px rgba(244, 180, 0, 0.07),
+    0 6px 16px rgba(11, 30, 61, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  margin-bottom: 10px;
+}
+.slot-title { letter-spacing: -0.01em; }
+.slot-header-sub { font-size: 11.5px; font-weight: 500; letter-spacing: 0.02em; color: var(--gray-400); margin: 2px 0 0; }
+/* Minimal "── ✦ ──" separator, drawn entirely in CSS — no new copy, no
+   i18n key, purely a premium divider between the header and the machine. */
+.slot-header-divider { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 210px; margin: 14px auto 0; }
+.slot-header-divider-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(244, 180, 0, 0.4), transparent); }
+.slot-header-divider-star { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; background: var(--gold); box-shadow: 0 0 6px rgba(244, 180, 0, 0.55); }
+
+.slot-machine {
+  position: relative;
+  overflow: hidden;
+  background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-xl);
+  padding: 22px 16px 18px; box-shadow: 0 1px 2px rgba(16, 30, 60, 0.04), 0 14px 30px rgba(16, 30, 60, 0.07);
+  margin-bottom: 18px;
+}
+/* Almost-invisible ambient glow pair (navy + gold), purely a premium
+   detail — kept well behind the 0.03–0.07 opacity range so it never
+   competes with any text/crest, never reads as a background image. */
+.slot-machine::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(11, 30, 61, 0.05), transparent 45%),
+    radial-gradient(circle at 92% 88%, rgba(244, 180, 0, 0.06), transparent 42%);
+  pointer-events: none;
+}
+/* Dark navy "cabinet" frame around the 4 reels — makes them read as one
+   slot machine instead of 4 separate cards floating on the page. Layered
+   depth: outer gold hairline, inset gold edge, inner shadow floor, and a
+   faint top light reflection — a physical machine, not a flat panel. */
+.slot-reels-panel {
+  position: relative;
+  background: linear-gradient(165deg, var(--navy-600) 0%, var(--navy) 55%, #060f22 100%);
+  border: 1px solid rgba(244, 180, 0, 0.38);
+  border-radius: var(--radius-lg);
+  padding: 16px 12px 14px;
+  box-shadow:
+    inset 0 0 0 1px rgba(244, 180, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -14px 20px -10px rgba(0, 0, 0, 0.5),
+    0 4px 14px rgba(11, 30, 61, 0.25),
+    0 0 26px -8px rgba(244, 180, 0, 0.22);
+  margin-bottom: 16px;
+}
+.slot-reels-panel::before {
+  content: '';
+  position: absolute; top: 0; left: 12%; right: 12%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+  pointer-events: none;
+}
+.slot-reels { display: flex; justify-content: center; gap: 7px; }
+.slot-reel {
+  flex: 1 1 0; max-width: 86px; aspect-ratio: 1 / 1.1;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, var(--white), var(--gray-50));
+  border: 1px solid rgba(244, 180, 0, 0.5); border-radius: var(--radius-md);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+.slot-reel-empty-icon { color: var(--gray-400); }
+/* Crests are drawn at their normal size="lg" TeamBadge box everywhere
+   else in the app (match cards, live score) — only inside the slot reel
+   card are they shrunk and given breathing room, so a crest with its own
+   white/square source image never reads as edge-to-edge with the card.
+   Scoped strictly to .slot-reel so size="lg" stays untouched elsewhere. */
+.slot-reel .team-badge.size-lg {
+  width: 42px;
+  height: 47px;
+}
+.slot-reel .team-badge img { object-fit: contain; }
+/* Additive on top of the existing shared .btn.btn-gold — never overrides
+   those base rules, so every OTHER gold button in the app is untouched. */
+.slot-spin-btn {
+  position: relative; overflow: hidden; border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(244, 180, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.slot-spin-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 9px 20px rgba(244, 180, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+.slot-spin-btn:active:not(:disabled) { transform: scale(0.98); }
+.slot-spin-btn::after {
+  content: ''; position: absolute; top: 0; left: -60%; width: 35%; height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+  transform: skewX(-20deg);
+  animation: slotButtonSweep 4.6s ease-in-out infinite;
+}
+@keyframes slotButtonSweep {
+  0% { left: -60%; }
+  35% { left: 130%; }
+  100% { left: 130%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slot-spin-btn::after { display: none; }
+}
+.slot-remaining {
+  display: flex; align-items: center; gap: 7px; width: fit-content; margin: 12px auto 0;
+  font-size: 11px; font-weight: 700; color: var(--navy);
+  background: var(--white); border: 1px solid var(--gray-200);
+  padding: 7px 14px; border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+}
+.slot-remaining-dots { display: flex; align-items: center; gap: 4px; margin-left: 2px; }
+.slot-remaining-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gray-200); transition: background 0.2s ease, box-shadow 0.2s ease; }
+.slot-remaining-dot.active { background: var(--gold); box-shadow: 0 0 5px rgba(244, 180, 0, 0.55); }
+
+/* One-shot clone flown from the winning reel to its slot in the album
+   below (see src/utils/slotFlight.js) — position/transform are set
+   inline per-flight; this class only supplies the premium "golden trail"
+   look (glow + a soft expanding ring) so it never reads as a bare crest
+   teleporting across the screen. */
+.slot-flight-badge {
+  filter: drop-shadow(0 0 8px rgba(244, 180, 0, 0.5)) drop-shadow(0 3px 8px rgba(11, 30, 61, 0.3));
+}
+.slot-flight-badge::after {
+  content: '';
+  position: absolute;
+  inset: -35%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(244, 180, 0, 0.4), transparent 65%);
+  animation: slotFlightTrail 0.85s ease-out;
+}
+@keyframes slotFlightTrail {
+  0% { opacity: 0.9; transform: scale(0.55); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+/* Brief landing acknowledgement on the destination album slot — a soft
+   gold ring pulse, not a layout change, so it works whether the slot was
+   already visible or just scrolled into view. */
+.slot-album-item-landed { animation: slotAlbumLanded 0.7s ease-out; }
+@keyframes slotAlbumLanded {
+  0% { box-shadow: 0 0 0 0 rgba(244, 180, 0, 0.55); transform: scale(1); }
+  35% { box-shadow: 0 0 0 6px rgba(244, 180, 0, 0.16); transform: scale(1.08); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 180, 0, 0); transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slot-flight-badge::after { animation: none; opacity: 0; }
+  .slot-album-item-landed { animation: none; }
+}
+/* A short, one-shot "unlock" moment, not a modal/overlay — still lives
+   directly inside the existing slot section. */
+.slot-result {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px;
+  margin-top: 14px; padding: 14px 14px 12px;
+  border-radius: var(--radius-lg);
+  animation: slotResultIn 0.45s ease backwards;
+}
+.slot-result.new {
+  background: linear-gradient(165deg, var(--gold-100), #fffaec);
+  border: 1px solid rgba(244, 180, 0, 0.35);
+  box-shadow: 0 3px 12px rgba(244, 180, 0, 0.18);
+  color: var(--gold-700);
+}
+.slot-result.duplicate {
+  background: var(--bg-soft);
+  border: 1px solid var(--gray-100);
+  color: var(--gray-600);
+}
+.slot-result.empty {
+  background: var(--bg-soft);
+  border: 1px solid var(--gray-100);
+  color: var(--gray-500);
+  padding: 12px 14px 11px;
+}
+.slot-result-title { display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800; font-size: 13px; letter-spacing: 0.01em; }
+.slot-result-new-badge {
+  font-size: 8.5px; font-weight: 900; letter-spacing: 0.05em; color: var(--white);
+  background: linear-gradient(145deg, var(--red), #b3221f); padding: 2px 6px; border-radius: 999px;
+}
+.slot-result-badge { margin: 4px 0 2px; border-radius: 50%; }
+.slot-result.new .slot-result-badge { animation: slotBadgeUnlock 0.55s ease-out backwards; animation-delay: 0.1s; }
+.slot-result-sub { font-weight: 600; font-size: 12px; opacity: 0.85; }
+.slot-result-caption { font-size: 10px; font-weight: 600; opacity: 0.6; margin-top: 1px; }
+@keyframes slotResultIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes slotBadgeUnlock {
+  0% { box-shadow: 0 0 0 0 rgba(244, 180, 0, 0); transform: scale(0.82); }
+  60% { box-shadow: 0 0 18px 3px rgba(244, 180, 0, 0.32); }
+  100% { box-shadow: 0 0 9px 1px rgba(244, 180, 0, 0.16); transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slot-result, .slot-result.new .slot-result-badge { animation: none; }
+}
+
+/* Full-album completion celebration — a bigger, gold, one-shot moment,
+   still inline in the Slot section (no modal/overlay). "Confetti" is kept
+   deliberately understated: a soft radial glow burst plus two tiny star
+   glints, not literal falling particles — premium, not a kids' app. */
+.slot-result.complete {
+  position: relative; overflow: hidden;
+  background: linear-gradient(165deg, #fff6d9, var(--gold-100));
+  border: 1px solid rgba(244, 180, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(244, 180, 0, 0.25);
+  color: var(--gold-700);
+  padding: 20px 16px;
+}
+.slot-result.complete::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(244, 180, 0, 0.35), transparent 60%);
+  animation: slotCompleteGlow 0.9s ease-out backwards;
+}
+.slot-result-complete-icon {
+  width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 35% 30%, #fff3c4, var(--gold) 55%, var(--gold-700)); color: var(--navy);
+  box-shadow: 0 4px 14px rgba(244, 180, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  margin-bottom: 8px; animation: slotBadgeUnlock 0.6s ease-out backwards; animation-delay: 0.1s;
+}
+.slot-result.complete .slot-result-title { font-size: 15px; }
+.slot-result.complete .slot-result-sub { font-size: 12.5px; }
+.slot-result-complete-count { font-weight: 900; font-size: 18px; color: var(--gold-700); margin-top: 6px; letter-spacing: 0.02em; }
+@keyframes slotCompleteGlow {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slot-result.complete::before, .slot-result-complete-icon { animation: none; }
+}
+
+.slot-album-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.slot-album-title { font-weight: 800; font-size: 14px; color: var(--navy); }
+.slot-album-count { font-weight: 800; font-size: 12.5px; color: var(--gray-500); }
+.slot-album-progress { width: 100%; height: 7px; border-radius: 999px; background: var(--gray-100); overflow: hidden; box-shadow: inset 0 1px 2px rgba(11, 30, 61, 0.08); }
+.slot-album-progress-fill {
+  display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--blue), var(--blue-600));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: width 0.4s ease;
+}
+.slot-album-progress-label { font-size: 10.5px; font-weight: 600; color: var(--gray-400); margin: 6px 0 16px; }
+.slot-album.complete { border-color: rgba(244, 180, 0, 0.4); box-shadow: var(--shadow-sm), 0 0 0 1px rgba(244, 180, 0, 0.12); }
+.slot-album.complete .slot-album-progress-fill { background: linear-gradient(90deg, var(--gold), var(--gold-700)); }
+.slot-album-complete-badge {
+  display: flex; align-items: center; gap: 5px; width: fit-content; margin: 8px 0 16px;
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.03em; color: var(--gold-700);
+  background: var(--gold-100); border: 1px solid rgba(244, 180, 0, 0.3);
+  padding: 4px 10px; border-radius: 999px;
+}
+.slot-album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 10px; }
+.slot-album-item {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px 4px 8px;
+  border-radius: var(--radius-md); background: var(--white); border: 1px solid rgba(244, 180, 0, 0.22);
+  box-shadow: 0 1px 3px rgba(11, 30, 61, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.slot-album-item:not(.locked):hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(11, 30, 61, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.6); }
+.slot-album-item.locked { background: var(--bg-soft); border-color: var(--gray-100); box-shadow: none; }
+.slot-album-item.locked .team-badge { filter: grayscale(1); opacity: 0.5; }
+/* Fires exactly once, right when flyBadgeToAlbum's clone lands on this
+   slot (see SlotPage's handleLanded/unlockingTeamId) — a short "impact +
+   gold flash + grayscale-to-color unlock" sequence, ~0.6s total. Only
+   ever applied to the one slot that was just won; the item's real
+   locked/unlocked class is driven separately (see ClubAlbum) so this is
+   purely the transition moment between the two, never a state of its own. */
+.slot-album-item.unlocking { animation: slotAlbumUnlockScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes slotAlbumUnlockScale {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.slot-album-item.unlocking::before {
+  content: '';
+  position: absolute; inset: -3px;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(244, 180, 0, 0.5), transparent 70%);
+  animation: slotAlbumGoldFlash 0.55s ease-out;
+  pointer-events: none;
+}
+@keyframes slotAlbumGoldFlash {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.slot-album-item.unlocking .team-badge { animation: slotAlbumUnlockFilter 0.65s ease-out; }
+@keyframes slotAlbumUnlockFilter {
+  0% { filter: grayscale(1); opacity: 0.65; }
+  45% { filter: grayscale(0.25); opacity: 0.9; }
+  100% { filter: grayscale(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slot-album-item.unlocking,
+  .slot-album-item.unlocking::before,
+  .slot-album-item.unlocking .team-badge {
+    animation: none;
+  }
+}
+.slot-album-item-name { font-size: 9px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; color: var(--gray-500); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.slot-album-item.locked .slot-album-item-name { color: var(--gray-400); }
+@media (prefers-reduced-motion: reduce) {
+  .slot-album-item { transition: none; }
+}
+
+/* ==========================================================================
+   ZBERATELIA — every player's Slot progress (read-only, realtime)
+   ========================================================================== */
+.zberatelia { margin-top: 18px; }
+.zberatelia-title { font-weight: 800; font-size: 14px; color: var(--navy); margin-bottom: 12px; }
+.zberatelia-list { display: flex; flex-direction: column; }
+.zberatelia-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+.zberatelia-row:last-child { border-bottom: none; padding-bottom: 2px; }
+.zberatelia-row.me { background: var(--blue-50); margin: 0 -14px; padding: 10px 14px; border-radius: var(--radius-sm); border-bottom: none; }
+.zberatelia-rank {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 11px; color: var(--gray-500); background: var(--gray-100);
+}
+.zberatelia-rank-1 { background: linear-gradient(145deg, #fff3c4, var(--gold) 55%, var(--gold-700)); color: #4a3300; box-shadow: 0 2px 5px rgba(185, 130, 10, 0.35); }
+.zberatelia-rank-2 { background: linear-gradient(145deg, #f6f8fa, #b7c1d1 60%, #94a1b3); color: #40485a; }
+.zberatelia-rank-3 { background: linear-gradient(145deg, #f0b784, #c98a4b 60%, #8f5a2b); color: #3f2409; }
+.zberatelia-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: var(--navy); color: var(--white);
+  font-size: 11.5px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; overflow: hidden;
+}
+.zberatelia-info { flex: 1; min-width: 0; }
+.zberatelia-name-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+.zberatelia-name { font-weight: 700; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zberatelia-count { flex-shrink: 0; font-weight: 800; font-size: 11.5px; color: var(--gray-500); }
+.zberatelia-progress { width: 100%; height: 5px; border-radius: 999px; background: var(--gray-100); overflow: hidden; }
+.zberatelia-progress-fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--blue), var(--blue-600)); transition: width 0.4s ease; }
