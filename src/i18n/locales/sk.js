@@ -50,9 +50,9 @@ export default {
   },
 
   table: {
-    title: 'Tabuľka',
-    statsTitle: 'Štatistiky tipov',
-    favoriteTipTitle: '🎯 Obľúbený tip',
+    title: '🏆 Tabuľka',
+    statsTitle: '🎯 Štatistiky tipov',
+    favoriteTipTitle: '⚽ Obľúbený tip',
     favoriteTipTooltip: 'Najčastejšie hraný presný výsledok',
     noFavoriteTip: 'Žiadne tipy',
     headPosition: '#',

@@ -1106,22 +1106,42 @@ img { max-width: 100%; display: block; }
 /* ==========================================================================
    TABLE / RANKING PAGE
    ========================================================================== */
-.rank-table { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 26px; }
+.rank-table { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-xl); overflow: hidden; margin-bottom: 26px; box-shadow: var(--shadow-sm); }
 .rank-table-head {
   display: flex; align-items: center; gap: 12px; padding: 10px 16px;
   font-size: 10.5px; font-weight: 800; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em;
   background: var(--bg-soft); border-bottom: 1px solid var(--gray-100);
 }
-.rank-table-head .rank-head-pos { width: 26px; text-align: center; }
+.rank-table-head .rank-head-pos { width: 28px; text-align: center; }
 .rank-table-head .rank-head-avatar-spacer { width: 30px; flex-shrink: 0; }
 .rank-table-head .rank-head-name { flex: 1; }
 .rank-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--gray-100); border-left: 3px solid transparent; }
 .rank-row:last-child { border-bottom: none; }
 .rank-row.me { background: var(--blue-50); }
-.rank-row.pos-1 { background: var(--gold-100); border-left-color: var(--gold); }
-.rank-row.pos-1.me { background: var(--gold-100); }
-.rank-position { width: 26px; display: flex; align-items: center; justify-content: center; }
-.rank-position-num { font-weight: 800; color: var(--gray-500); font-size: 13.5px; }
+.rank-row.pos-1 { background: linear-gradient(90deg, var(--gold-100), rgba(255, 243, 214, 0.25)); border-left-color: var(--gold); }
+.rank-row.pos-1.me { background: linear-gradient(90deg, var(--gold-100), rgba(255, 243, 214, 0.25)); }
+.rank-row.pos-2 { background: linear-gradient(90deg, rgba(183, 193, 209, 0.16), transparent); border-left-color: #b7c1d1; }
+.rank-row.pos-3 { background: linear-gradient(90deg, rgba(201, 138, 75, 0.13), transparent); border-left-color: #c98a4b; }
+.rank-position { width: 28px; display: flex; align-items: center; justify-content: center; }
+.rank-badge {
+  width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 12.5px; color: var(--gray-500); background: var(--gray-100);
+}
+.rank-badge-1 {
+  background: linear-gradient(145deg, #fff3c4, var(--gold) 55%, var(--gold-700));
+  color: #4a3300;
+  box-shadow: 0 2px 6px rgba(185, 130, 10, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.55);
+}
+.rank-badge-2 {
+  background: linear-gradient(145deg, #f6f8fa, #b7c1d1 60%, #94a1b3);
+  color: #40485a;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.14), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+}
+.rank-badge-3 {
+  background: linear-gradient(145deg, #f0b784, #c98a4b 60%, #8f5a2b);
+  color: #3f2409;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.14), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
 .rank-avatar {
   width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: var(--white);
   font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;
@@ -1130,27 +1150,91 @@ img { max-width: 100%; display: block; }
 /* Fills whichever sized/colored circle it's placed in (podium, chat, live
    tips, ranking) — perfectly round, never stretched. */
 .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
-.rank-name { flex: 1; font-weight: 700; font-size: 14px; color: var(--text); }
+.rank-name { flex: 1; font-weight: 700; font-size: 14px; color: var(--text); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rank-row.me .rank-name { color: var(--blue-600); }
 .rank-row.pos-1 .rank-name { color: var(--navy); font-weight: 800; }
-.rank-points { font-weight: 800; font-size: 15px; color: var(--navy); }
+.rank-points-pill {
+  flex-shrink: 0; font-weight: 800; font-size: 13.5px; color: var(--navy);
+  background: var(--gray-100); padding: 4px 13px; border-radius: 999px;
+}
+.rank-row.pos-1 .rank-points-pill { background: var(--gold-100); color: var(--gold-700); }
+.rank-row.pos-2 .rank-points-pill { background: rgba(183, 193, 209, 0.25); color: #40485a; }
+.rank-row.pos-3 .rank-points-pill { background: rgba(201, 138, 75, 0.2); color: #6b3f18; }
 
 .table-scroll { overflow-x: auto; }
 .stats-list {
-  background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-lg); overflow: hidden;
+  background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-xl); overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 .stats-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: flex; align-items: center; gap: 12px;
   padding: 11px 16px; border-bottom: 1px solid var(--gray-100);
 }
 .stats-row:last-child { border-bottom: none; }
 .stats-row.me { background: var(--blue-50); }
-.stats-name { font-weight: 700; font-size: 13.5px; color: var(--text); }
-.stats-metrics { display: flex; align-items: center; gap: 16px; }
-.stats-metric { display: flex; align-items: center; gap: 5px; font-weight: 800; font-size: 13px; color: var(--navy); min-width: 30px; }
-.stats-metric-icon { font-size: 13px; line-height: 1; }
+.stats-avatar {
+  width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: var(--white);
+  font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; overflow: hidden;
+}
+.stats-name { flex: 1; min-width: 0; font-weight: 700; font-size: 13.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stats-metrics { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.stats-metric {
+  display: flex; align-items: center; gap: 5px; font-weight: 800; font-size: 12.5px; color: var(--navy);
+  background: var(--gray-100); padding: 4px 10px; border-radius: 999px;
+}
+/* Exact-score (🎯) vs correct-winner (👍) badges get their own subtle,
+   premium tint so the two categories read apart at a glance — icons,
+   numbers and what they mean are unchanged, only the badge background. */
+.stats-metric-exact {
+  background: linear-gradient(135deg, var(--red-bg), #ffe1e4);
+  border: 1px solid rgba(224, 51, 47, 0.14);
+  color: var(--red);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.stats-metric-winner {
+  background: linear-gradient(135deg, var(--green-bg), #dcf6e6);
+  border: 1px solid rgba(23, 163, 74, 0.16);
+  color: var(--green);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.stats-metric-icon { font-size: 12px; line-height: 1; }
 .stats-metric-count { font-size: 12px; font-weight: 700; color: var(--gray-500); }
-.stats-metric-empty { font-size: 13px; font-weight: 600; color: var(--gray-400); }
+.stats-metric-empty { font-size: 13px; font-weight: 600; color: var(--gray-400); flex-shrink: 0; }
+
+/* ==========================================================================
+   FAVORITE TIP — premium highlight rows on the Tabuľka page
+   ========================================================================== */
+.favorite-tip-list { display: flex; flex-direction: column; gap: 10px; }
+.favorite-tip-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-lg);
+  padding: 11px 14px; box-shadow: var(--shadow-sm);
+}
+.favorite-tip-row.me { background: var(--blue-50); border-color: var(--blue-100); }
+.favorite-tip-player { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.favorite-tip-avatar {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--navy); color: var(--white);
+  font-size: 12.5px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; overflow: hidden;
+}
+.favorite-tip-player-text { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.favorite-tip-name { font-weight: 800; font-size: 13.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.favorite-tip-subtitle { font-size: 10.5px; font-weight: 600; color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.favorite-tip-score-pill {
+  flex-shrink: 0;
+  background: linear-gradient(160deg, var(--navy-600), var(--navy));
+  color: var(--white); font-weight: 800; font-size: 12.5px; letter-spacing: 0.01em;
+  padding: 6px 13px; border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 6px rgba(11, 30, 61, 0.2);
+  max-width: 128px;
+  text-align: center;
+  line-height: 1.3;
+}
+.favorite-tip-count { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.favorite-tip-count-value { font-size: 11.5px; font-weight: 800; color: var(--navy); white-space: nowrap; }
+.favorite-tip-progress { width: 56px; height: 5px; border-radius: 999px; background: var(--gray-100); overflow: hidden; }
+.favorite-tip-progress-fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--blue), var(--blue-600)); }
 
 /* ==========================================================================
    CHAT PAGE

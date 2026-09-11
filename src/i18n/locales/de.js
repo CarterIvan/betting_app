@@ -46,9 +46,9 @@ export default {
   },
 
   table: {
-    title: 'Tabelle',
-    statsTitle: 'Tipp-Statistik',
-    favoriteTipTitle: '🎯 Lieblingstipp',
+    title: '🏆 Tabelle',
+    statsTitle: '🎯 Tipp-Statistik',
+    favoriteTipTitle: '⚽ Lieblingstipp',
     favoriteTipTooltip: 'Am häufigsten getipptes genaues Ergebnis',
     noFavoriteTip: 'Noch keine Tipps',
     headPosition: '#',

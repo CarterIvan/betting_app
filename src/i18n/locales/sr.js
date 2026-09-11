@@ -46,9 +46,9 @@ export default {
   },
 
   table: {
-    title: 'Tabela',
-    statsTitle: 'Statistika tipova',
-    favoriteTipTitle: '🎯 Omiljeni tip',
+    title: '🏆 Tabela',
+    statsTitle: '🎯 Statistika tipova',
+    favoriteTipTitle: '⚽ Omiljeni tip',
     favoriteTipTooltip: 'Najčešće igran tačan rezultat',
     noFavoriteTip: 'Nema tipova',
     headPosition: '#',

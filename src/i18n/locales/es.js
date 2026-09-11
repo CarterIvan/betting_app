@@ -46,9 +46,9 @@ export default {
   },
 
   table: {
-    title: 'Clasificación',
-    statsTitle: 'Estadísticas de pronósticos',
-    favoriteTipTitle: '🎯 Pronóstico favorito',
+    title: '🏆 Clasificación',
+    statsTitle: '🎯 Estadísticas de pronósticos',
+    favoriteTipTitle: '⚽ Pronóstico favorito',
     favoriteTipTooltip: 'Resultado exacto más pronosticado',
     noFavoriteTip: 'Sin pronósticos',
     headPosition: '#',

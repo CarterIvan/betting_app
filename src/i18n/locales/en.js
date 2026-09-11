@@ -49,9 +49,9 @@ export default {
   },
 
   table: {
-    title: 'Table',
-    statsTitle: 'Prediction stats',
-    favoriteTipTitle: '🎯 Favorite tip',
+    title: '🏆 Table',
+    statsTitle: '🎯 Prediction stats',
+    favoriteTipTitle: '⚽ Favorite tip',
     favoriteTipTooltip: 'Most often played exact score',
     noFavoriteTip: 'No tips yet',
     headPosition: '#',
