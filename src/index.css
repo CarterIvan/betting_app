@@ -1082,6 +1082,20 @@ img { max-width: 100%; display: block; }
 .live-card-team-name { font-size: 12.5px; font-weight: 700; color: var(--text); }
 .live-card-score { font-size: 26px; font-weight: 900; color: var(--red); padding: 0 8px; letter-spacing: 0.02em; }
 
+/* Admin-only quick live-score +/- controls (LiveMatchDetail) — same visual
+   weight as .live-card-score above so the numbers line up identically to
+   the read-only version everyone else sees. */
+.live-score-admin-controls { display: flex; align-items: center; gap: 6px; }
+.live-score-num { font-size: 26px; font-weight: 900; color: var(--red); letter-spacing: 0.02em; min-width: 20px; text-align: center; }
+.live-score-sep { font-size: 18px; font-weight: 800; color: var(--red); margin: 0 2px; }
+.live-score-btn {
+  width: 26px; height: 26px; border-radius: 50%; border: none; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  background: var(--red-bg); color: var(--red); font-size: 15px; font-weight: 800; line-height: 1;
+}
+.live-score-btn:active { opacity: 0.7; }
+.live-score-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
 .live-detail-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
 .back-btn {
   width: 36px; height: 36px; border-radius: 10px; border: 1.5px solid var(--gray-200); background: var(--white);

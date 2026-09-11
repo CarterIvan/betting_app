@@ -139,6 +139,25 @@ async function recalculateAllPoints() {
   if (error) throw error
 }
 
-const matchesService = { getAll, create, update, updateLiveScore, remove, finish, recalculateAllPoints }
+/** Realtime: any UPDATE to a match (edited teams/kickoff/round, a live
+ * score change, or finish_match() setting the final result) arrives here
+ * as the full new row — mapped through the SAME mapMatch() used by
+ * getAll(), so callers get the identical shape either way. See migration
+ * 0022 for enabling this on the `matches` table. Returns an unsubscribe
+ * function, same shape as chatService.subscribe. */
+function subscribe(onUpdate) {
+  const channel = supabase
+    .channel('public:matches')
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'matches' },
+      (payload) => onUpdate(mapMatch(payload.new))
+    )
+    .subscribe()
+
+  return () => supabase.removeChannel(channel)
+}
+
+const matchesService = { getAll, create, update, updateLiveScore, remove, finish, recalculateAllPoints, subscribe }
 
 export default matchesService

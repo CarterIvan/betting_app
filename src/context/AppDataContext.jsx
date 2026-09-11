@@ -232,10 +232,22 @@ export function AppDataProvider({ children }) {
       })
     })
 
+    // Any match UPDATE (a live-score +/- from another admin, an edited
+    // kickoff/team/round, or finish_match() setting the final result)
+    // arrives here as the full already-mapped match — replacing that one
+    // entry in the SAME `matches` state everything else already reads, so
+    // the Live page (and everywhere else) reflects it immediately without
+    // a manual refresh. No separate/duplicate match state — this updates
+    // the existing array in place. See migration 0022.
+    const unsubscribeMatches = matchesService.subscribe((match) => {
+      setMatches((prev) => prev.map((m) => (m.id === match.id ? match : m)))
+    })
+
     return () => {
       cancelled = true
       unsubscribeChat()
       unsubscribeReadReceipts()
+      unsubscribeMatches()
     }
   }, [currentUser, accessBlocked])
 
