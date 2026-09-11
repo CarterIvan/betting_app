@@ -726,6 +726,58 @@ img { max-width: 100%; display: block; }
   letter-spacing: 0.22em;
   margin-top: 3px;
 }
+
+/* ==========================================================================
+   DASHBOARD TICKER — admin-controlled scrolling announcement (0023)
+   ========================================================================== */
+.dashboard-ticker {
+  display: flex; align-items: stretch; height: 34px;
+  background: linear-gradient(180deg, var(--white), var(--blue-50));
+  border: 1px solid var(--gray-200);
+  border-radius: 11px; margin-bottom: 16px;
+  overflow: hidden; max-width: 100%;
+  box-shadow: 0 1px 4px rgba(11, 30, 61, 0.06);
+}
+/* Left zone: opaque premium badge, fixed, own background/stacking context —
+   must sit visually ABOVE the scrolling text and never let it show through. */
+.dashboard-ticker-badge {
+  flex-shrink: 0; display: flex; align-items: center; gap: 5px;
+  padding: 0 12px; background: var(--navy);
+  position: relative; z-index: 2;
+}
+.dashboard-ticker-badge-emoji { font-size: 10.5px; line-height: 1; }
+.dashboard-ticker-badge-text {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--gold); white-space: nowrap;
+}
+/* Right zone: the ONLY part that scrolls, clipped to its own box (not just
+   the outer container) so the animated text can never render past this
+   boundary, under, or over the badge — plus a soft edge fade so text eases
+   in/out instead of clipping abruptly. */
+.dashboard-ticker-scroll {
+  flex: 1 1 auto; min-width: 0; overflow: hidden; position: relative;
+  display: flex; align-items: center; padding-left: 14px;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+}
+.dashboard-ticker-track {
+  display: flex; flex-shrink: 0; min-width: 0;
+  animation: dashboard-ticker-scroll 24s linear infinite;
+}
+.dashboard-ticker-text {
+  flex-shrink: 0; white-space: nowrap; margin-right: 28px;
+  font-size: 11.5px; font-weight: 600; color: var(--navy-600);
+}
+.dashboard-ticker-text::after { content: '•'; margin-left: 28px; color: var(--gold-600); font-weight: 800; }
+@keyframes dashboard-ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-ticker-track { animation: none; }
+  .dashboard-ticker-scroll { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+  .dashboard-ticker-text:last-child { display: none; }
+}
 .welcome-banner {
   font-size: 18px;
   font-weight: 800;
@@ -999,6 +1051,8 @@ img { max-width: 100%; display: block; }
 .stats-metrics { display: flex; align-items: center; gap: 16px; }
 .stats-metric { display: flex; align-items: center; gap: 5px; font-weight: 800; font-size: 13px; color: var(--navy); min-width: 30px; }
 .stats-metric-icon { font-size: 13px; line-height: 1; }
+.stats-metric-count { font-size: 12px; font-weight: 700; color: var(--gray-500); }
+.stats-metric-empty { font-size: 13px; font-weight: 600; color: var(--gray-400); }
 
 /* ==========================================================================
    CHAT PAGE

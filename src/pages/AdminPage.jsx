@@ -15,6 +15,7 @@ import AdminDangerZone from '../components/AdminDangerZone.jsx'
 import AdminLeagueLogo from '../components/AdminLeagueLogo.jsx'
 import AdminTeamsList from '../components/AdminTeamsList.jsx'
 import AdminAnnouncementForm from '../components/AdminAnnouncementForm.jsx'
+import AdminTickerForm from '../components/AdminTickerForm.jsx'
 import AdminPaymentForm from '../components/AdminPaymentForm.jsx'
 
 const MENU = [
@@ -160,6 +161,7 @@ export default function AdminPage({ onNavigate }) {
         <>
           <AdminLeagueLogo />
           <AdminAnnouncementForm />
+          <AdminTickerForm />
           <div className="card">
             <p style={{ fontSize: 12.5, color: 'var(--text-soft)', margin: '0 0 12px', fontWeight: 600 }}>
               {t('admin.recalcDescription')}

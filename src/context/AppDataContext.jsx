@@ -243,11 +243,21 @@ export function AppDataProvider({ children }) {
       setMatches((prev) => prev.map((m) => (m.id === match.id ? match : m)))
     })
 
+    // Any settings change (a Dashboard ticker publish/edit/removal, or any
+    // of prize/logo/IBAN) arrives here as the full new row — replacing the
+    // whole `settings` object, same as refetchSettings() already does, so
+    // the ticker appears/changes/disappears on an already-open Dashboard
+    // without a manual refresh. See migration 0023.
+    const unsubscribeSettings = settingsService.subscribe((updated) => {
+      setSettings(updated)
+    })
+
     return () => {
       cancelled = true
       unsubscribeChat()
       unsubscribeReadReceipts()
       unsubscribeMatches()
+      unsubscribeSettings()
     }
   }, [currentUser, accessBlocked])
 
@@ -517,6 +527,19 @@ export function AppDataProvider({ children }) {
     [refetchSettings]
   )
 
+  /** Admin-only (RLS — see migration 0023). Same one settings row as
+   * everything else above; pass null to remove/disable the ticker. The
+   * realtime subscription above also updates every OTHER open Dashboard —
+   * this refetch just covers the admin's own client the same way every
+   * other settings action here already does. */
+  const updateTickerMessage = useCallback(
+    async (tickerMessage) => {
+      await settingsService.setTickerMessage(tickerMessage)
+      await refetchSettings()
+    },
+    [refetchSettings]
+  )
+
   /** Admin-only (Storage RLS + settings RLS — see migration 0008). Uploads
    * the file, then saves the resulting URL onto the one settings row — the
    * next fetch anywhere in the app (login screen included) reflects it. */
@@ -693,6 +716,7 @@ export function AppDataProvider({ children }) {
     setPlayerPaymentStatus,
     updatePrizeSettings,
     updatePaymentIban,
+    updateTickerMessage,
     updateLeagueLogo,
     removeLeagueLogo,
     editPlayerBalance,

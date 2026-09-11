@@ -5,6 +5,7 @@ import { computeLeaderboard } from '../services/scoringService'
 import Podium from '../components/Podium.jsx'
 import UpcomingMatches from '../components/UpcomingMatches.jsx'
 import ProfileMenu from '../components/ProfileMenu.jsx'
+import DashboardTicker from '../components/DashboardTicker.jsx'
 
 export default function DashboardPage() {
   const { currentUser, players, predictions, leagueLogoUrl } = useAppData()
@@ -32,6 +33,8 @@ export default function DashboardPage() {
       </div>
 
       <Podium leaderboard={leaderboard.slice(0, 3)} />
+
+      <DashboardTicker />
 
       <UpcomingMatches />
     </div>

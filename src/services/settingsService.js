@@ -7,6 +7,10 @@ function mapSettings(row) {
     thirdPlacePrize: Number(row.third_place_prize),
     logoUrl: row.logo_url,
     paymentIban: row.payment_iban,
+    // Admin-entered, verbatim (never translated) Dashboard ticker text —
+    // see migration 0023. null means no active ticker; the Dashboard
+    // renders nothing in that case, never an empty container.
+    tickerMessage: row.ticker_message,
   }
 }
 
@@ -15,7 +19,7 @@ function mapSettings(row) {
 async function get() {
   const { data, error } = await supabase
     .from('settings')
-    .select('first_place_prize, second_place_prize, third_place_prize, logo_url, payment_iban')
+    .select('first_place_prize, second_place_prize, third_place_prize, logo_url, payment_iban, ticker_message')
     .eq('id', true)
     .single()
   if (error) throw error
@@ -75,6 +79,43 @@ async function setPaymentIban(paymentIban) {
   if (error) throw error
 }
 
-const settingsService = { get, update, getLogoUrl, setLogoUrl, getPaymentIban, setPaymentIban }
+/** Admin-only (RLS — see migration 0023). Pass null to remove/disable the
+ * ticker — the Dashboard then renders nothing, not an empty container. */
+async function setTickerMessage(tickerMessage) {
+  const { error } = await supabase
+    .from('settings')
+    .update({ ticker_message: tickerMessage, updated_at: new Date().toISOString() })
+    .eq('id', true)
+  if (error) throw error
+}
+
+/** Realtime: any change to the settings row (a ticker publish/edit/
+ * removal, or any of prize/logo/IBAN) arrives here as the full new row,
+ * mapped through the SAME mapSettings() used by get() — see migration
+ * 0023. Returns an unsubscribe function, same shape as the other
+ * services' subscribe(). */
+function subscribe(onUpdate) {
+  const channel = supabase
+    .channel('public:settings')
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'settings' },
+      (payload) => onUpdate(mapSettings(payload.new))
+    )
+    .subscribe()
+
+  return () => supabase.removeChannel(channel)
+}
+
+const settingsService = {
+  get,
+  update,
+  getLogoUrl,
+  setLogoUrl,
+  getPaymentIban,
+  setPaymentIban,
+  setTickerMessage,
+  subscribe,
+}
 
 export default settingsService
